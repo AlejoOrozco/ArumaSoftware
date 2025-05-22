@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { db } from "../../../firebase.config";
+import { db } from "../../../config/firebaseConfig";
 import { collection, addDoc } from "firebase/firestore";
-import "./Inventory.css";
+import "./AddProduct.css";
 
 const initialState = {
   Name: "",

@@ -1,0 +1,36 @@
+.inventory-menu-container {
+  background: #FFFFFF;
+  border-radius: 20px;
+  box-shadow: 0 4px 32px rgba(120, 72, 36, 0.10);
+  padding: 48px 56px;
+  min-width: 400px;
+  max-width: 700px;
+  text-align: center;
+  margin: 0 auto;
+}
+
+.inventory-menu-buttons {
+  display: flex;
+  gap: 32px;
+  justify-content: center;
+  margin-top: 32px;
+  flex-wrap: wrap;
+}
+
+.inventory-menu-btn {
+  background: var(--coffee-caramel, #a9744f);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 20px 40px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+  box-shadow: 0 2px 8px rgba(120, 72, 36, 0.08);
+}
+
+.inventory-menu-btn:hover {
+  background: var(--coffee-brown, #6b3e26);
+  transform: translateY(-2px) scale(1.03);
+}

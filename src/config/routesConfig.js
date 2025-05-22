@@ -1,5 +1,5 @@
 import DashBoard from "../pages/Dashboard/Dashboard";
-import Inventory from "../pages/Inventory/Inventory";
+import Inventory from "../pages/Inventory/AddProducts/AddProduct";
 
 const routesConfig = [
   {
@@ -8,16 +8,16 @@ const routesConfig = [
     headerTitle: "Dashboard",
     icon: "fa-solid fa-house",
     showInSidebar: true,
-    headerDescription: "Welcome to the dashboard",
+    headerDescription: "Bienvenido al dashboard",
 
   },
   {
-    path: "/inventory",
+    path: "/Inventory",
     componentName: Inventory,
-    headerTitle: "Inventory",
+    headerTitle: "Inventario",
     icon: "fa-solid fa-box",
     showInSidebar: true,
-    headerDescription: "Welcome to the inventory",
+    headerDescription: "Bienvenido al inventario",
 
   },
 ];
