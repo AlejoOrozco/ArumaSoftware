@@ -1,4 +1,6 @@
+// src/pages/Home.jsx
 import React from "react";
+import "./Home.css";
 
 const Home = () => (
   <div
@@ -13,7 +15,7 @@ const Home = () => (
     }}
   >
     <h1 style={{ fontWeight: 700, fontSize: "2rem", marginBottom: 16 }}>
-      Bienvenido a Aruma Café
+      Bienvenido a Aruma Café <span className="sidebar-logo-cursive">Software</span>
     </h1>
     <p style={{ color: "#444", marginBottom: 32 }}>
       Selecciona una sección en la barra lateral para comenzar.

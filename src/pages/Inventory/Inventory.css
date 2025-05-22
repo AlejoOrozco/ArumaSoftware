@@ -1,0 +1,153 @@
+.inventory-container {
+  background: var(--coffee-card);
+  border-radius: 20px;
+  box-shadow: var(--coffee-shadow);
+  padding: 48px 56px;
+  min-width: 70%;
+  max-width: 100%;
+  text-align: center;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+.inventory-title {
+  font-weight: 700;
+  font-size: 2rem;
+  margin-bottom: 16px;
+  color: #6b3e26;
+}
+
+.inventory-description {
+  color: #a9744f;
+  margin-bottom: 32px;
+}
+
+.inventory-add-btn {
+  background: var(--coffee-caramel);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 28px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.inventory-add-btn:hover {
+  background: var(--coffee-brown);
+}
+
+.inventory-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.inventory-form input {
+  padding: 10px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--coffee-border);
+  font-size: 1rem;
+  outline: none;
+  transition: border 0.2s;
+  background: var(--coffee-card);
+  color: var(--coffee-brown);
+}
+
+.inventory-form input:focus {
+  border: 1.5px solid var(--coffee-caramel);
+}
+
+.inventory-error {
+  color: #d32f2f;
+  margin-bottom: 10px;
+  font-size: 0.95rem;
+}
+
+.inventory-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  justify-content: center;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+    .inventory-form-grid input,
+    .inventory-form-grid select {
+      width: 100%;
+    }
+  }
+
+.form-col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 180px;
+}
+
+.inventory-select {
+  padding: 10px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--coffee-border);
+  font-size: 1rem;
+  outline: none;
+  transition: border 0.2s;
+  background: var(--coffee-card);
+  color: var(--coffee-brown);
+}
+
+.inventory-select:focus {
+  border: 1.5px solid var(--coffee-caramel);
+}
+
+.weight-unit-row {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.form-button-row {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.inventory-add-btn {
+  width: 100%;
+  max-width: 400px;
+}
+
+button, .inventory-add-btn {
+  background: var(--coffee-caramel);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 28px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+button:hover, .inventory-add-btn:hover {
+  background: var(--coffee-brown);
+}
+
+.card, .inventory-container {
+  background: #ffffff;
+  box-shadow: var(--coffee-shadow);
+  border-radius: 20px;
+}
+
+input, select {
+  background: var(--coffee-card);
+  border: 1px solid var(--coffee-border);
+  color: var(--coffee-brown);
+}
+input:focus, select:focus {
+  border: 1.5px solid var(--coffee-caramel);
+}

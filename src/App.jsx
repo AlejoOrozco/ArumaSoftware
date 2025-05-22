@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Sidebar from "./components/Sidebar/Sidebar";
-import Home from "./pages/Home";
+import Home from "./pages/Home/Home";
 import Inventory from "./pages/Inventory/Inventory";
 import Reports from "./pages/Reports/Reports";
 import "./App.css"; // For global styles and background

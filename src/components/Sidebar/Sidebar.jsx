@@ -4,8 +4,10 @@ import "./Sidebar.css";
 
 const Sidebar = () => (
   <aside className="sidebar">
-    <div className="sidebar-logo">ARUMA CAFÉ</div>
-    <nav>
+    <div className="sidebar-logo">
+      Aruma Café <span className="sidebar-logo-cursive">Software</span>
+    </div>
+    <nav className="sidebar-links">
       <NavLink to="/" end className="sidebar-link">
         <FaHome /> Inicio
       </NavLink>

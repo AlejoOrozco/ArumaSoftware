@@ -1,0 +1,15 @@
+.sidebar-logo-cursive {
+    font-family: 'Pacifico', cursive;
+    font-size: 1.1em;
+    color: #a9744f;
+    margin-left: 4px;
+    font-style: italic;
+  }
+  .sidebar-logo {
+    font-weight: bold;
+    font-size: 1.3rem;
+    margin-bottom: 60px;
+    color: var(--coffee-brown);
+    letter-spacing: 2px;
+    align-items: center;
+  }
