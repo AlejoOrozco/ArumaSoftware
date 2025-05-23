@@ -40,9 +40,10 @@ const Inventory = () => {
       Weight: Number(product.Weight)
     };
     try {
-      await addDoc(collection(db, "Product"), dataToSend);
+      const docRef = await addDoc(collection(db, "Product"), dataToSend);
       alert("Producto agregado correctamente!");
       setProduct(initialState);
+      alert("Producto agregado con ID: " + docRef.id);
     } catch (e) {
       setError("Error al agregar producto: " + e.message);
     }

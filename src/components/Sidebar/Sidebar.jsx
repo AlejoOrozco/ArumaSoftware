@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { FaHome, FaCog, FaChartBar } from "react-icons/fa";
+import { FaHome, FaCog, FaChartBar, FaFileInvoiceDollar } from "react-icons/fa";
 import "./Sidebar.css";
 
 const Sidebar = () => (
@@ -16,6 +16,9 @@ const Sidebar = () => (
       </NavLink>
       <NavLink to="/reportes" className="sidebar-link">
         <FaCog /> Reportes
+      </NavLink>
+      <NavLink to="/factura" className="sidebar-link">
+        <FaFileInvoiceDollar /> Factura
       </NavLink>
     </nav>
   </aside>

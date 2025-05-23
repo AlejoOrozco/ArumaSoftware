@@ -5,6 +5,7 @@ import Menu from "./pages/Inventory/Menu/Menu";
 import AddProduct from "./pages/Inventory/AddProducts/AddProduct";
 import EditProduct from "./pages/Inventory/EditProducts/EditProduct";
 import Reports from "./pages/Reports/Reports";
+import Invoice from "./pages/Invoice/Invoice";
 import "./App.css"; // For global styles and background
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
             <Route path="/productos/agregar" element={<AddProduct />} />
             <Route path="/productos/editar" element={<EditProduct />} />
             <Route path="/reportes" element={<Reports />} />
+            <Route path="/factura" element={<Invoice />} />
           </Routes>
         </div>
       </div>
