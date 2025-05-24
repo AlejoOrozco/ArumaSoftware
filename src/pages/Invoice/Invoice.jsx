@@ -15,6 +15,7 @@ const Invoice = () => {
   const [message, setMessage] = useState("");
   const [showSummary, setShowSummary] = useState(false);
   const [savedInvoice, setSavedInvoice] = useState(null);
+  const [showModal, setShowModal] = useState(false);
 
   // Fetch all products on mount
   useEffect(() => {
@@ -96,6 +97,7 @@ const Invoice = () => {
       });
       setShowSummary(true);
       setMessage("");
+      setShowModal(true);
     } catch (e) {
       setMessage("Error al guardar: " + e.message);
     }
@@ -106,6 +108,14 @@ const Invoice = () => {
     setShowSummary(false);
     setSavedInvoice(null);
     setMessage("");
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setInvoiceProducts([]);
+    setComment("");
+    setShowSummary(false);
+    setSavedInvoice(null);
   };
 
   return (
@@ -234,6 +244,15 @@ const Invoice = () => {
           </div>
         </div>
       </div>
+      {showModal && (
+        <div className="invoice-modal-backdrop" onClick={handleCloseModal}>
+          <div className="invoice-modal" onClick={e => e.stopPropagation()}>
+            <h3>Compra Registrada</h3>
+            <p>La compra ha sido registrada exitosamente.</p>
+            <button className="invoice-modal-close" onClick={handleCloseModal}>Cerrar</button>
+          </div>
+        </div>
+      )}
     </PageLayout>
   );
 };
