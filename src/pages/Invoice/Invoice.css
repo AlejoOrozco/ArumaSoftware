@@ -135,12 +135,11 @@
 }
 
 .invoice-container {
-  background: #ffffff;
   border-radius: 20px;
-  box-shadow: 0 4px 32px rgba(120, 72, 36, 0.10);
+  align-self: center;
   max-width: 1000px;
   width: 95vw;
-  margin: 40px auto;
+  margin: 50px 50px;
   padding: 48px 32px;
 }
 

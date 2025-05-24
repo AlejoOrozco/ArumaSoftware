@@ -4,7 +4,9 @@ import Home from "./pages/Home/Home";
 import Menu from "./pages/Inventory/Menu/Menu";
 import AddProduct from "./pages/Inventory/AddProducts/AddProduct";
 import EditProduct from "./pages/Inventory/EditProducts/EditProduct";
-import Reports from "./pages/Reports/Reports";
+import Reports from "./pages/Reports/Main/Reports";
+import InvoicesReport from "./pages/Reports/Invoices/InvoicesReport";
+import ProductsReport from "./pages/Reports/Products/ProductsReport";
 import Invoice from "./pages/Invoice/Invoice";
 import "./App.css"; // For global styles and background
 
@@ -16,11 +18,13 @@ function App() {
         <div className="main-content">
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/productos" element={<Menu />} />
-            <Route path="/productos/agregar" element={<AddProduct />} />
-            <Route path="/productos/editar" element={<EditProduct />} />
+            <Route path="/inventario" element={<Menu />} />
+            <Route path="/inventario/agregar" element={<AddProduct />} />
+            <Route path="/inventario/editar" element={<EditProduct />} />
             <Route path="/reportes" element={<Reports />} />
-            <Route path="/factura" element={<Invoice />} />
+            <Route path="/reportes/facturas" element={<InvoicesReport />} />
+            <Route path="/reportes/productos" element={<ProductsReport />} />
+            <Route path="/venta" element={<Invoice />} />
           </Routes>
         </div>
       </div>

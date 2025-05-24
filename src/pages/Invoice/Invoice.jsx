@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { db } from "../../config/firebaseConfig";
 import { collection, getDocs, addDoc } from "firebase/firestore";
+import PageLayout from "../../components/common/PageLayout";
 import "./Invoice.css";
 
 const Invoice = () => {
@@ -108,163 +109,132 @@ const Invoice = () => {
   };
 
   return (
-    <div className="invoice-container invoice-flex">
-      {!showSummary ? (
-        <>
-          <div className="invoice-left">
-            <h1 className="invoice-title">Nueva Factura</h1>
-            <div style={{ marginBottom: 24 }}>
-              <input
-                type="text"
-                placeholder="Buscar producto..."
-                value={query}
-                onChange={e => {
-                  setQuery(e.target.value);
-                  setSelectedProduct(null);
-                }}
-                className="invoice-search-bar"
-              />
-              {filtered.length > 0 && (
-                <ul className="invoice-autocomplete-list">
-                  {filtered.slice(0, 5).map(p => (
-                    <li
-                      key={p.id}
-                      className="invoice-autocomplete-item"
-                      onClick={() => {
-                        // If already in invoice, do nothing or increase quantity
-                        const existing = invoiceProducts.find(prod => prod.id === p.id);
-                        if (existing) {
-                          setInvoiceProducts(invoiceProducts.map(prod =>
-                            prod.id === p.id
-                              ? { ...prod, quantity: prod.quantity + 1 }
-                              : prod
-                          ));
-                        } else {
-                          setInvoiceProducts([
-                            ...invoiceProducts,
-                            { ...p, quantity: 1 }
-                          ]);
-                        }
-                        setQuery("");
-                        setSelectedProduct(null);
-                        setFiltered([]);
-                      }}
-                    >
-                      {p.Name}
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {selectedProduct && (
-                <div style={{ marginTop: 12 }}>
-                  <span>{selectedProduct.Name} - ${selectedProduct.Purchase_Sell}</span>
-                  <input
-                    type="number"
-                    min={1}
-                    value={quantity}
-                    onChange={e => setQuantity(e.target.value)}
-                    style={{ marginLeft: 12, width: 60, borderRadius: 6, border: "1px solid #e0c9b3", padding: 4 }}
-                  />
-                  <button
-                    className="inventory-add-btn"
-                    style={{ marginLeft: 12, padding: "6px 18px" }}
-                    onClick={handleAddProduct}
-                    type="button"
-                  >
-                    Agregar
-                  </button>
-                </div>
-              )}
-            </div>
-            <textarea
-              placeholder="Comentario (opcional)"
-              value={comment}
-              onChange={e => setComment(e.target.value)}
-              className="invoice-comment"
+    <PageLayout pageTitle="Factura">
+      <div className="invoice-container invoice-flex">
+        <div className="invoice-left">
+          <h1 className="invoice-title">Nueva Factura</h1>
+          <div style={{ marginBottom: 24 }}>
+            <input
+              type="text"
+              placeholder="Buscar producto..."
+              value={query}
+              onChange={e => {
+                setQuery(e.target.value);
+                setSelectedProduct(null);
+              }}
+              className="invoice-search-bar"
             />
-            <br />
-            <button
-              className="inventory-add-btn"
-              onClick={handleSaveInvoice}
-              type="button"
-            >
-              Guardar factura
-            </button>
-            {message && <div className="invoice-message">{message}</div>}
-          </div>
-          <div className="invoice-right">
-            <h2 className="invoice-summary-title">Factura</h2>
-            <ul className="invoice-product-list">
-              {invoiceProducts.map((p, idx) => (
-                <li key={idx} className="invoice-product-item">
-                  <span>
-                    {p.Name} x
-                    <input
-                      type="number"
-                      min={1}
-                      value={p.quantity}
-                      onChange={e => {
-                        const newQty = Number(e.target.value);
-                        setInvoiceProducts(invoiceProducts.map((prod, i) =>
-                          i === idx ? { ...prod, quantity: newQty } : prod
+            {filtered.length > 0 && (
+              <ul className="invoice-autocomplete-list">
+                {filtered.slice(0, 5).map(p => (
+                  <li
+                    key={p.id}
+                    className="invoice-autocomplete-item"
+                    onClick={() => {
+                      // If already in invoice, do nothing or increase quantity
+                      const existing = invoiceProducts.find(prod => prod.id === p.id);
+                      if (existing) {
+                        setInvoiceProducts(invoiceProducts.map(prod =>
+                          prod.id === p.id
+                            ? { ...prod, quantity: prod.quantity + 1 }
+                            : prod
                         ));
-                      }}
-                      style={{
-                        width: 50,
-                        margin: "0 8px",
-                        borderRadius: 6,
-                        border: "1px solid #e0c9b3",
-                        padding: 4
-                      }}
-                    />
-                    = ${p.Purchase_Sell * p.quantity}
-                  </span>
-                  <button
-                    className="invoice-remove-btn"
-                    onClick={() => handleRemoveProduct(idx)}
-                    type="button"
+                      } else {
+                        setInvoiceProducts([
+                          ...invoiceProducts,
+                          { ...p, quantity: 1 }
+                        ]);
+                      }
+                      setQuery("");
+                      setSelectedProduct(null);
+                      setFiltered([]);
+                    }}
                   >
-                    Quitar
-                  </button>
-                </li>
-              ))}
-            </ul>
-            <div style={{ marginTop: 16 }}>
-              <strong>Total: ${total}</strong>
-            </div>
-          </div>
-        </>
-      ) : (
-        <div className="invoice-summary-confirmation">
-          <h2>¡Factura guardada!</h2>
-          <div className="invoice-summary">
-            <h3 className="invoice-summary-title">Resumen de la factura</h3>
-            <ul className="invoice-product-list">
-              {savedInvoice.Products.map((p, idx) => (
-                <li key={idx} className="invoice-product-item">
-                  {p.Name} x {p.Quantity} = ${p.Purchase_Sell * p.Quantity}
-                </li>
-              ))}
-            </ul>
-            <div style={{ marginTop: 16 }}>
-              <strong>Total: ${savedInvoice.Total}</strong>
-            </div>
-            {savedInvoice.Comment && (
-              <div style={{ marginTop: 8, color: "#a9744f" }}>
-                Comentario: {savedInvoice.Comment}
+                    {p.Name}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {selectedProduct && (
+              <div style={{ marginTop: 12 }}>
+                <span>{selectedProduct.Name} - ${selectedProduct.Purchase_Sell}</span>
+                <input
+                  type="number"
+                  min={1}
+                  value={quantity}
+                  onChange={e => setQuantity(e.target.value)}
+                  style={{ marginLeft: 12, width: 60, borderRadius: 6, border: "1px solid #e0c9b3", padding: 4 }}
+                />
+                <button
+                  className="inventory-add-btn"
+                  style={{ marginLeft: 12, padding: "6px 18px" }}
+                  onClick={handleAddProduct}
+                  type="button"
+                >
+                  Agregar
+                </button>
               </div>
             )}
           </div>
+          <textarea
+            placeholder="Comentario (opcional)"
+            value={comment}
+            onChange={e => setComment(e.target.value)}
+            className="invoice-comment"
+          />
+          <br />
           <button
             className="inventory-add-btn"
-            onClick={handleEditInvoice}
+            onClick={handleSaveInvoice}
             type="button"
           >
-            Editar factura
+            Registrar Compra
           </button>
+          {message && <div className="invoice-message">{message}</div>}
         </div>
-      )}
-    </div>
+        <div className="invoice-right">
+          <h2 className="invoice-summary-title">Factura</h2>
+          <ul className="invoice-product-list">
+            {invoiceProducts.map((p, idx) => (
+              <li key={idx} className="invoice-product-item">
+                <span>
+                  {p.Name} x
+                  <input
+                    type="number"
+                    min={1}
+                    value={p.quantity}
+                    onChange={e => {
+                      const newQty = Number(e.target.value);
+                      setInvoiceProducts(invoiceProducts.map((prod, i) =>
+                        i === idx ? { ...prod, quantity: newQty } : prod
+                      ));
+                    }}
+                    style={{
+                      width: 50,
+                      margin: "0 8px",
+                      borderRadius: 6,
+                      border: "1px solid #e0c9b3",
+                      padding: 4
+                    }}
+                  />
+                  = ${p.Purchase_Sell * p.quantity}
+                </span>
+                <button
+                  className="invoice-remove-btn"
+                  onClick={() => handleRemoveProduct(idx)}
+                  type="button"
+                >
+                  Quitar
+                </button>
+              </li>
+            ))}
+          </ul>
+          <div style={{ marginTop: 16 }}>
+            <strong>Total: ${total}</strong>
+          </div>
+        </div>
+      </div>
+    </PageLayout>
   );
 };
 

@@ -11,15 +11,16 @@ const Sidebar = () => (
       <NavLink to="/" end className="sidebar-link">
         <FaHome /> Inicio
       </NavLink>
-      <NavLink to="/productos" className="sidebar-link">
-        <FaChartBar /> Productos
+      <NavLink to="/Venta" className="sidebar-link">
+        <FaFileInvoiceDollar /> Venta
+      </NavLink>
+      <NavLink to="/inventario" className="sidebar-link">
+        <FaChartBar /> Inventario
       </NavLink>
       <NavLink to="/reportes" className="sidebar-link">
         <FaCog /> Reportes
       </NavLink>
-      <NavLink to="/factura" className="sidebar-link">
-        <FaFileInvoiceDollar /> Factura
-      </NavLink>
+      
     </nav>
   </aside>
 );
