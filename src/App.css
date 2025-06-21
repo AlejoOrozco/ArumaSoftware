@@ -1,12 +1,23 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Dancing+Script:wght@700&display=swap');
+
 :root {
-  --coffee-bg: #f9f6f2;
+  --coffee-background: #fdfaf6;
   --coffee-card: #fff8f3;
-  --coffee-shadow: 0 4px 32px rgba(120, 72, 36, 0.10);
+  --coffee-border: #e0c9b3;
+  --coffee-shadow: 0 4px 12px rgba(120, 72, 36, 0.1);
   --coffee-brown: #6b3e26;
   --coffee-caramel: #a9744f;
-  --coffee-border: #e0c9b3;
   --coffee-accent: #f7d9c4;
-  --coffee-error: #d32f2f;
+}
+
+body {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  background-color: var(--coffee-background);
+}
+
+* {
+  box-sizing: border-box;
 }
 
 #root {

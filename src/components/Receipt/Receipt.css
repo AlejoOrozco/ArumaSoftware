@@ -1,0 +1,91 @@
+.receipt-container {
+  display: none; /* Hidden by default */
+  font-family: 'Courier New', Courier, monospace;
+  color: #000;
+  width: 280px; /* Approx 80mm receipt paper width */
+  padding: 10px;
+}
+
+.receipt-header {
+  text-align: center;
+  border-bottom: 1px dashed #000;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+}
+
+.receipt-shop-name {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin: 0;
+}
+
+.receipt-header p {
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.receipt-info {
+  margin-bottom: 10px;
+  font-size: 0.8rem;
+}
+
+.receipt-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.receipt-table th,
+.receipt-table td {
+  padding: 4px 2px;
+  text-align: left;
+}
+
+.receipt-table th:nth-child(2),
+.receipt-table td:nth-child(2) {
+  text-align: center;
+}
+
+.receipt-table th:nth-child(3),
+.receipt-table td:nth-child(3),
+.receipt-table th:nth-child(4),
+.receipt-table td:nth-child(4) {
+  text-align: right;
+}
+
+.receipt-table thead {
+  border-bottom: 1px dashed #000;
+}
+
+.receipt-total {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed #000;
+  text-align: right;
+  font-size: 1.1rem;
+}
+
+.receipt-footer {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 0.8rem;
+}
+
+@media print {
+  /* Hide everything on the page */
+  body > *:not(.receipt-print-wrapper) {
+    display: none;
+  }
+
+  /* Make the receipt container visible and position it */
+  .receipt-print-wrapper, .receipt-container {
+    display: block !important;
+    margin: 0;
+    padding: 0;
+    width: 100%; /* Use full printable area */
+  }
+  
+  @page {
+    margin: 5mm; /* Adjust margins for the printer */
+  }
+} 

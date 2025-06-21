@@ -1,25 +1,25 @@
 .inventory-container {
-  background: var(--coffee-card);
+  background: var(--coffee-card, #fff8f3);
   border-radius: 20px;
-  box-shadow: var(--coffee-shadow);
+  box-shadow: var(--coffee-shadow, 0 4px 20px rgba(120, 72, 36, 0.1));
   padding: 48px 56px;
   min-width: 70%;
-  max-width: 100%;
-  text-align: center;
-  margin-left: 10px;
-  margin-right: 10px;
+  max-width: 800px;
+  margin: 0 auto;
 }
 
 .inventory-title {
   font-weight: 700;
   font-size: 2rem;
   margin-bottom: 16px;
-  color: #6b3e26;
+  color: var(--coffee-brown, #6b3e26);
+  text-align: center;
 }
 
 .inventory-description {
-  color: #a9744f;
+  color: var(--coffee-caramel, #a9744f);
   margin-bottom: 32px;
+  text-align: center;
 }
 
 .inventory-add-btn {
@@ -41,100 +41,154 @@
 .inventory-form {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 20px;
   margin-top: 24px;
 }
 
-.inventory-form input {
-  padding: 10px 14px;
-  border-radius: 6px;
-  border: 1px solid var(--coffee-border);
-  font-size: 1rem;
-  outline: none;
-  transition: border 0.2s;
-  background: var(--coffee-card);
-  color: var(--coffee-brown);
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.inventory-form input:focus {
-  border: 1.5px solid var(--coffee-caramel);
+.form-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+}
+
+label {
+  color: var(--coffee-brown, #6b3e26);
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.inventory-input,
+.inventory-select {
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--coffee-border, #e0c9b3);
+  font-size: 1rem;
+  outline: none;
+  transition: all 0.2s;
+  background: var(--coffee-card, #fff8f3);
+  color: var(--coffee-brown, #6b3e26);
+}
+
+.inventory-input:focus,
+.inventory-select:focus {
+  border: 1.5px solid var(--coffee-caramel, #a9744f);
+  box-shadow: 0 0 0 2px rgba(169, 116, 79, 0.1);
+}
+
+.inventory-input::placeholder {
+  color: #bba193;
 }
 
 .inventory-error {
   color: #d32f2f;
-  margin-bottom: 10px;
+  background: #ffebee;
+  padding: 12px 16px;
+  border-radius: 8px;
   font-size: 0.95rem;
+  text-align: center;
+  margin-top: 8px;
 }
 
-.inventory-form-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 24px;
-  justify-content: center;
-  flex-wrap: wrap;
-  width: 100%;
+.inventory-success {
+  color: #2e7d32;
+  background: #e8f5e9;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  text-align: center;
+  margin-top: 8px;
 }
 
-@media (max-width: 768px) {
-    .inventory-form-grid input,
-    .inventory-form-grid select {
-      width: 100%;
-    }
-  }
-
-.form-col {
+.form-actions {
   display: flex;
-  flex-direction: column;
-  gap: 14px;
-  min-width: 180px;
-}
-
-.inventory-select {
-  padding: 10px 14px;
-  border-radius: 6px;
-  border: 1px solid var(--coffee-border);
-  font-size: 1rem;
-  outline: none;
-  transition: border 0.2s;
-  background: var(--coffee-card);
-  color: var(--coffee-brown);
-}
-
-.inventory-select:focus {
-  border: 1.5px solid var(--coffee-caramel);
-}
-
-.weight-unit-row {
-  display: flex;
-  gap: 8px;
-  width: 100%;
-}
-
-.form-button-row {
-  grid-column: 1 / -1;
-  display: flex;
+  gap: 16px;
   justify-content: center;
   margin-top: 16px;
 }
 
-.inventory-add-btn {
-  width: 100%;
-  max-width: 400px;
-}
-
-button, .inventory-add-btn {
-  background: var(--coffee-caramel);
-  color: #fff;
+.inventory-submit-btn,
+.inventory-cancel-btn {
+  padding: 12px 24px;
   border: none;
   border-radius: 8px;
-  padding: 12px 28px;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s;
+  min-width: 160px;
 }
-button:hover, .inventory-add-btn:hover {
-  background: var(--coffee-brown);
+
+.inventory-submit-btn {
+  background: var(--coffee-caramel, #a9744f);
+  color: white;
+}
+
+.inventory-submit-btn:hover {
+  background: var(--coffee-brown, #6b3e26);
+  transform: translateY(-1px);
+}
+
+.inventory-cancel-btn {
+  background: #f5f0eb;
+  color: var(--coffee-brown, #6b3e26);
+  border: 1px solid var(--coffee-border, #e0c9b3);
+}
+
+.inventory-cancel-btn:hover {
+  background: #ebe3db;
+  transform: translateY(-1px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .inventory-container {
+    padding: 32px 24px;
+    margin: 10px;
+  }
+
+  .inventory-title {
+    font-size: 1.5rem;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .inventory-submit-btn,
+  .inventory-cancel-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .inventory-container {
+    padding: 24px 16px;
+  }
+
+  .inventory-title {
+    font-size: 1.3rem;
+  }
+
+  .inventory-input,
+  .inventory-select {
+    padding: 10px 14px;
+    font-size: 0.9rem;
+  }
+
+  label {
+    font-size: 0.9rem;
+  }
 }
 
 .card, .inventory-container {

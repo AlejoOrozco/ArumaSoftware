@@ -11,7 +11,7 @@ const Menu = () => {
       <div className="inventory-menu-container">
         <h1 className="inventory-title">Servicio de inventario</h1>
         <p className="inventory-description">
-          Elije si quieres agregar o editar un producto del inventario
+          Elije la acción que quieres realizar con el inventario
         </p>
         <div className="inventory-menu-buttons">
           <button
@@ -25,6 +25,12 @@ const Menu = () => {
             onClick={() => navigate("/inventario/editar")}
           >
             Editar producto
+          </button>
+          <button
+            className="inventory-menu-btn"
+            onClick={() => navigate("/inventario/todos")}
+          >
+            Ver todos los productos
           </button>
         </div>
       </div>

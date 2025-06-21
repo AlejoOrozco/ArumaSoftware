@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { db } from "../../../config/firebaseConfig";
 import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
 import PageLayout from "../../../components/common/PageLayout";
@@ -26,6 +26,23 @@ const EditProduct = () => {
   const [editingId, setEditingId] = useState(null);
   const [editData, setEditData] = useState({});
   const [message, setMessage] = useState("");
+
+  // Check for product data passed from AllProducts page
+  useEffect(() => {
+    const storedProductData = localStorage.getItem('editProductData');
+    if (storedProductData) {
+      try {
+        const productData = JSON.parse(storedProductData);
+        setEditingId(productData.id);
+        setEditData(productData);
+        setMessage("Producto cargado para edición");
+        // Clear the stored data
+        localStorage.removeItem('editProductData');
+      } catch (error) {
+        console.error('Error parsing stored product data:', error);
+      }
+    }
+  }, []);
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -88,6 +105,64 @@ const EditProduct = () => {
     <PageLayout pageTitle="Editar producto">
       <div className="inventory-container">
         <h1 className="inventory-title">Editar Producto</h1>
+        
+        {/* Show edit form if product is loaded from AllProducts */}
+        {editingId && editData.Name && (
+          <div style={{ marginBottom: 24 }}>
+            <h2>Editando: {editData.Name}</h2>
+            <form className="edit-product-edit-form" onSubmit={e => { e.preventDefault(); handleSave(); }}>
+              {Object.keys(propertyLabels).map(key => (
+                key === "Unit_Measure" ? (
+                  <div key={key}>
+                    <label className="edit-product-label">{propertyLabels[key]}:</label>
+                    <select
+                      name={key}
+                      value={editData[key] || ""}
+                      onChange={handleEditChange}
+                      className="inventory-select"
+                    >
+                      {unitOptions.map(opt => (
+                        <option key={opt} value={opt}>{opt}</option>
+                      ))}
+                    </select>
+                  </div>
+                ) : (
+                  <div key={key}>
+                    <label className="edit-product-label">{propertyLabels[key]}:</label>
+                    <input
+                      type={["Purchase_Sell", "Purchase_Price", "Stock_Current", "Stock_Minimum", "Weight"].includes(key) ? "number" : "text"}
+                      name={key}
+                      value={editData[key] || ""}
+                      onChange={handleEditChange}
+                      className="inventory-form-input"
+                    />
+                  </div>
+                )
+              ))}
+              <div className="edit-product-edit-actions">
+                <button
+                  className="edit-product-save-btn"
+                  type="submit"
+                >
+                  Guardar
+                </button>
+                <button
+                  className="edit-product-cancel-btn"
+                  onClick={() => {
+                    setEditingId(null);
+                    setEditData({});
+                    setMessage("");
+                  }}
+                  type="button"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* Search functionality */}
         <form onSubmit={handleSearch} style={{ marginBottom: 24 }}>
           <input
             type="text"
