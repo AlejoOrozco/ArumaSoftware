@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from "react-router-dom";
-import { FaHome, FaCog, FaChartBar, FaFileInvoiceDollar, FaTimes } from "react-icons/fa";
+import { FaHome, FaCog, FaChartBar, FaFileInvoiceDollar, FaTimes, FaCalendarDay } from "react-icons/fa";
 import "./Sidebar.css";
 
 const Sidebar = ({ isOpen, onClose }) => (
@@ -25,8 +25,8 @@ const Sidebar = ({ isOpen, onClose }) => (
         <NavLink to="/inventario" className="sidebar-link" onClick={onClose}>
           <FaChartBar /> Inventario
         </NavLink>
-        <NavLink to="/reportes" className="sidebar-link" onClick={onClose}>
-          <FaCog /> Reportes
+        <NavLink to="/cerrar-dia" className="sidebar-link" onClick={onClose}>
+          <FaCalendarDay /> Cerrar Día
         </NavLink>
       </nav>
     </aside>

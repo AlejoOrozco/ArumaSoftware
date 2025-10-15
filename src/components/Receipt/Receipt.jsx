@@ -3,11 +3,12 @@ import PropTypes from 'prop-types';
 import './Receipt.css';
 
 const Receipt = React.forwardRef(({ invoice }, ref) => {
+  console.log('[Receipt] Rendering. invoice:', invoice, 'ref:', ref);
   if (!invoice) {
     return null;
   }
 
-  const { Products, Total, Date: invoiceDate, Comment } = invoice;
+  const { Products, Total, Date: invoiceDate, Comment, paymentMethod } = invoice;
 
   return (
     <div className="receipt-container" ref={ref}>
@@ -41,6 +42,11 @@ const Receipt = React.forwardRef(({ invoice }, ref) => {
       <div className="receipt-total">
         <strong>TOTAL: ${Total.toFixed(2)}</strong>
       </div>
+      {paymentMethod && (
+        <div className="receipt-payment">
+          <p><strong>Método de Pago:</strong> {paymentMethod === 'cash' ? 'Efectivo' : 'Transferencia'}</p>
+        </div>
+      )}
       {Comment && (
         <div className="receipt-footer">
           <p><strong>Comentario:</strong> {Comment}</p>
@@ -59,6 +65,7 @@ Receipt.propTypes = {
     Total: PropTypes.number.isRequired,
     Date: PropTypes.string.isRequired,
     Comment: PropTypes.string,
+    paymentMethod: PropTypes.string,
   }),
 };
 

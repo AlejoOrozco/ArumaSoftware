@@ -65,6 +65,18 @@
   font-size: 1.1rem;
 }
 
+.receipt-payment {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dotted #000;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.receipt-payment p {
+  margin: 0;
+}
+
 .receipt-footer {
   margin-top: 10px;
   text-align: center;

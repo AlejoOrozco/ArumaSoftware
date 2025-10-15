@@ -4,10 +4,8 @@ import Menu from "./pages/Inventory/Menu/Menu";
 import AddProduct from "./pages/Inventory/AddProducts/AddProduct";
 import EditProduct from "./pages/Inventory/EditProducts/EditProduct";
 import AllProducts from "./pages/Inventory/AllProducts/AllProducts";
-import Reports from "./pages/Reports/Main/Reports";
-import InvoicesReport from "./pages/Reports/Invoices/InvoicesReport";
-import ProductsReport from "./pages/Reports/Products/ProductsReport";
 import Invoice from "./pages/Invoice/Invoice";
+import CloseDay from "./pages/CloseDay/CloseDay";
 import "./App.css"; // For global styles and background
 
 function App() {
@@ -18,10 +16,8 @@ function App() {
       <Route path="/inventario/agregar" element={<AddProduct />} />
       <Route path="/inventario/editar" element={<EditProduct />} />
       <Route path="/inventario/todos" element={<AllProducts />} />
-      <Route path="/reportes" element={<Reports />} />
-      <Route path="/reportes/facturas" element={<InvoicesReport />} />
-      <Route path="/reportes/productos" element={<ProductsReport />} />
       <Route path="/factura" element={<Invoice />} />
+      <Route path="/cerrar-dia" element={<CloseDay />} />
     </Routes>
   );
 }
