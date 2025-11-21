@@ -1,0 +1,249 @@
+.discounts-container {
+  padding: 24px;
+}
+
+.discounts-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.discounts-header h1 {
+  color: var(--coffee-brown, #6b3e26);
+  font-size: 2rem;
+  margin: 0;
+}
+
+.add-discount-btn {
+  background: var(--coffee-brown, #6b3e26);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.add-discount-btn:hover {
+  background: var(--coffee-caramel, #a9744f);
+}
+
+.discounts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.discount-card {
+  background: var(--coffee-card, #fff8f3);
+  border: 1px solid var(--coffee-border, #e0c9b3);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(120, 72, 36, 0.1);
+}
+
+.discount-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.discount-card-header h3 {
+  color: var(--coffee-brown, #6b3e26);
+  font-size: 1.2rem;
+  margin: 0;
+  word-break: break-word;
+  flex: 1;
+}
+
+.discount-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: 12px;
+}
+
+.edit-btn,
+.delete-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.edit-btn {
+  background: var(--coffee-caramel, #a9744f);
+  color: white;
+}
+
+.edit-btn:hover {
+  background: var(--coffee-brown, #6b3e26);
+}
+
+.delete-btn {
+  background: #f44336;
+  color: white;
+}
+
+.delete-btn:hover {
+  background: #d32f2f;
+}
+
+.discount-card-body p {
+  margin: 8px 0;
+  color: var(--coffee-brown, #6b3e26);
+  font-size: 0.95rem;
+}
+
+.applies-to {
+  color: var(--coffee-caramel, #a9744f);
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--coffee-caramel, #a9744f);
+}
+
+.empty-hint {
+  font-size: 0.9rem;
+  margin-top: 8px;
+  color: var(--coffee-border, #e0c9b3);
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  padding: 32px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-content h2 {
+  color: var(--coffee-brown, #6b3e26);
+  font-size: 1.5rem;
+  margin-bottom: 24px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  color: var(--coffee-brown, #6b3e26);
+  margin-bottom: 8px;
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"] {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--coffee-border, #e0c9b3);
+  border-radius: 6px;
+  font-size: 1rem;
+  color: var(--coffee-brown, #6b3e26);
+}
+
+.product-search {
+  margin-bottom: 16px;
+}
+
+.selection-hint {
+  font-size: 0.9rem;
+  color: var(--coffee-caramel, #a9744f);
+  margin-bottom: 12px;
+  font-style: italic;
+}
+
+.products-list {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid var(--coffee-border, #e0c9b3);
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.product-checkbox {
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  margin-bottom: 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.product-checkbox:hover {
+  background: rgba(139, 69, 19, 0.05);
+}
+
+.product-checkbox input {
+  margin-right: 8px;
+  cursor: pointer;
+}
+
+.product-checkbox span {
+  color: var(--coffee-brown, #6b3e26);
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.save-btn,
+.cancel-btn {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.save-btn {
+  background: var(--coffee-brown, #6b3e26);
+  color: white;
+}
+
+.save-btn:hover {
+  background: var(--coffee-caramel, #a9744f);
+}
+
+.cancel-btn {
+  background: #ccc;
+  color: white;
+}
+
+.cancel-btn:hover {
+  background: #999;
+}

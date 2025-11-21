@@ -1,6 +1,6 @@
 .layout-container {
-  width: 1600px;
-  max-width: 1600px;
+  width: 100%;
+  max-width: 100%;
   display: flex;
   justify-content: flex-start;
   align-items: stretch;
@@ -11,8 +11,8 @@
   border-radius: 24px;
   box-shadow: 0 8px 32px rgba(120, 72, 36, 0.12);
   flex: 1 1 0;
-  margin: 0 32px;
-  min-height: 80vh;
+  margin: 0 20px;
+  min-height: calc(100vh - 40px);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -67,8 +67,9 @@
 
 .layout-content {
   flex-grow: 1;
-  padding: 24px;
+  padding: 0;
   overflow-y: auto;
+  width: 100%;
 }
 
 .page-layout {
@@ -82,12 +83,14 @@
   display: flex;
   flex-direction: column;
   transition: margin-left 0.3s ease;
-  width: 100%;
+  width: calc(100% - 260px);
+  margin-left: 260px;
 }
 
 @media (max-width: 768px) {
   .main-content-wrapper {
     margin-left: 0;
+    width: 100%;
   }
   
   .hamburger-menu {
@@ -104,14 +107,14 @@
 
 @media (max-width: 900px) {
   .layout-main-card {
-    margin: 0 4vw;
+    margin: 0 10px;
     border-radius: 14px;
   }
   .layout-content {
-    padding: 18px 6vw;
+    padding: 18px 20px;
   }
   .layout-navbar {
-    padding: 12px 6vw;
+    padding: 12px 20px;
     font-size: 1rem;
   }
 } 

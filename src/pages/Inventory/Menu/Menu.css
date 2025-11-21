@@ -2,10 +2,10 @@
   background: #FFFFFF;
   border-radius: 20px;
   padding: 48px 56px;
-  min-width: 400px;
-  max-width: 700px;
+  width: 100%;
+  max-width: 100%;
   text-align: center;
-  margin: 0 auto;
+  margin: 0;
   align-items: center;
 }
 

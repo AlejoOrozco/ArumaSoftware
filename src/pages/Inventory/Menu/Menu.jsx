@@ -22,15 +22,21 @@ const Menu = () => {
           </button>
           <button
             className="inventory-menu-btn"
-            onClick={() => navigate("/inventario/editar")}
+            onClick={() => navigate("/inventario/reabastecer")}
           >
-            Editar producto
+            Reabastecer inventario
           </button>
           <button
             className="inventory-menu-btn"
             onClick={() => navigate("/inventario/todos")}
           >
             Ver todos los productos
+          </button>
+          <button
+            className="inventory-menu-btn"
+            onClick={() => navigate("/inventario/descuentos")}
+          >
+            Gestión de descuentos
           </button>
         </div>
       </div>

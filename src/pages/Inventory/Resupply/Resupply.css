@@ -1,0 +1,266 @@
+.resupply-container {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 20px;
+}
+
+.resupply-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.resupply-title {
+  color: #8B4513;
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.resupply-description {
+  color: #666;
+  font-size: 1.1rem;
+  margin-bottom: 0;
+}
+
+.search-section {
+  margin-bottom: 30px;
+}
+
+.search-container {
+  position: relative;
+  width: 100%;
+  margin: 0;
+}
+
+.search-input {
+  width: 100%;
+  padding: 15px 20px;
+  font-size: 1.1rem;
+  border: 2px solid #D2B48C;
+  border-radius: 25px;
+  background-color: #FFF8DC;
+  color: #8B4513;
+  transition: all 0.3s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #8B4513;
+  box-shadow: 0 0 10px rgba(139, 69, 19, 0.2);
+}
+
+.search-input::placeholder {
+  color: #A0522D;
+}
+
+.search-results-count {
+  text-align: center;
+  margin-top: 10px;
+  color: #8B4513;
+  font-weight: 500;
+}
+
+.message {
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  text-align: center;
+  font-weight: 500;
+}
+
+.message.success {
+  background-color: #D4EDDA;
+  color: #155724;
+  border: 1px solid #C3E6CB;
+}
+
+.message.error {
+  background-color: #F8D7DA;
+  color: #721C24;
+  border: 1px solid #F5C6CB;
+}
+
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.resupply-product-card {
+  background: linear-gradient(135deg, #FFF8DC 0%, #F5E6D3 100%);
+  border: 2px solid #D2B48C;
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 4px 15px rgba(139, 69, 19, 0.1);
+  transition: all 0.3s ease;
+}
+
+.resupply-product-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(139, 69, 19, 0.15);
+  border-color: #8B4513;
+}
+
+.product-info {
+  margin-bottom: 20px;
+}
+
+.product-name {
+  color: #8B4513;
+  font-size: 1.3rem;
+  font-weight: bold;
+  margin-bottom: 8px;
+  line-height: 1.3;
+}
+
+.product-category {
+  color: #A0522D;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.product-brand {
+  color: #8B4513;
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+  font-style: italic;
+}
+
+.stock-info {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(139, 69, 19, 0.1);
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-top: 10px;
+}
+
+.current-stock {
+  color: #8B4513;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.stock-update-section {
+  border-top: 1px solid #D2B48C;
+  padding-top: 15px;
+}
+
+.stock-input-group {
+  margin-bottom: 15px;
+}
+
+.stock-input-group label {
+  display: block;
+  color: #8B4513;
+  font-weight: 600;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+}
+
+.stock-input-group input {
+  width: 100%;
+  padding: 10px 15px;
+  border: 2px solid #D2B48C;
+  border-radius: 8px;
+  background-color: white;
+  color: #8B4513;
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+}
+
+.stock-input-group input:focus {
+  outline: none;
+  border-color: #8B4513;
+}
+
+.stock-input-group input:disabled {
+  background-color: #f5f5f5;
+  color: #999;
+}
+
+.update-stock-btn {
+  width: 100%;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #8B4513 0%, #A0522D 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.update-stock-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #A0522D 0%, #8B4513 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(139, 69, 19, 0.3);
+}
+
+.update-stock-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.no-products {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 40px;
+  color: #8B4513;
+  font-size: 1.1rem;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #8B4513;
+  font-size: 1.2rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .products-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  .resupply-title {
+    font-size: 2rem;
+  }
+  
+  .search-input {
+    font-size: 1rem;
+    padding: 12px 15px;
+  }
+  
+  .resupply-product-card {
+    padding: 15px;
+  }
+  
+  .product-name {
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .resupply-container {
+    padding: 15px;
+  }
+  
+  .resupply-title {
+    font-size: 1.8rem;
+  }
+  
+  .resupply-description {
+    font-size: 1rem;
+  }
+}

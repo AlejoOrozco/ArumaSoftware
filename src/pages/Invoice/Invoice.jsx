@@ -72,6 +72,20 @@ const Invoice = () => {
     price: '',
   });
 
+  // State for addition modal
+  const [additionModal, setAdditionModal] = useState({
+    show: false,
+    productIndex: null,
+    productName: '',
+    additionName: '',
+    additionPrice: '',
+  });
+
+  // State for discount
+  const [discountCode, setDiscountCode] = useState('');
+  const [appliedDiscount, setAppliedDiscount] = useState(null);
+  const [isValidatingDiscount, setIsValidatingDiscount] = useState(false);
+
   // Payment method state
   const [paymentMethod, setPaymentMethod] = useState('cash'); // 'cash' or 'transfer'
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -80,6 +94,14 @@ const Invoice = () => {
   const receiptRef = useRef();
 
   const activeBoard = boards.find(b => b.firestoreId === activeBoardId);
+
+  // Helper function to update the active board
+  const setActiveBoard = (updatedBoard) => {
+    const updatedBoards = boards.map(b => 
+      b.firestoreId === activeBoardId ? updatedBoard : b
+    );
+    setBoards(updatedBoards);
+  };
 
   // Debug log in Receipt
   // (You must also add this in src/components/Receipt/Receipt.jsx)
@@ -647,6 +669,151 @@ Esta acción no se puede deshacer.`,
     setFiltered([]);
     setSelectedCategory(null);
   };
+
+  // Handle addition modal
+  const handleShowAdditionModal = (productIndex) => {
+    const product = activeBoard.products[productIndex];
+    setAdditionModal({
+      show: true,
+      productIndex: productIndex,
+      productName: product.Name,
+      additionName: '',
+      additionPrice: '',
+    });
+  };
+
+  const handleAddAddition = () => {
+    if (!additionModal.additionName || !additionModal.additionPrice || Number(additionModal.additionPrice) <= 0) {
+      setModalConfig({ 
+        show: true, 
+        variant: 'error', 
+        title: 'Datos Inválidos', 
+        message: 'Por favor, ingresa un nombre y un precio válido para la adición.' 
+      });
+      return;
+    }
+
+    if (!activeBoard) return;
+    
+    const additionPrice = Number(additionModal.additionPrice);
+    const newProducts = activeBoard.products.map((p, idx) => {
+      if (idx === additionModal.productIndex) {
+        const currentPrice = p.Purchase_Sell || 0;
+        const newPrice = currentPrice + additionPrice;
+        
+        return {
+          ...p,
+          Purchase_Sell: newPrice,
+          hasOverridePrice: true,
+          additions: [...(p.additions || []), {
+            name: additionModal.additionName,
+            price: additionPrice,
+          }],
+        };
+      }
+      return p;
+    });
+    
+    updateActiveBoard({ products: newProducts });
+    
+    setAdditionModal({
+      show: false,
+      productIndex: null,
+      productName: '',
+      additionName: '',
+      additionPrice: '',
+    });
+  };
+
+  const handleRemoveAddition = (productIndex, additionIndex) => {
+    if (!activeBoard) return;
+    
+    const newProducts = activeBoard.products.map((p, idx) => {
+      if (idx === productIndex) {
+        const additionToRemove = p.additions[additionIndex];
+        const newPrice = (p.Purchase_Sell || 0) - additionToRemove.price;
+        const updatedAdditions = p.additions.filter((_, addIdx) => addIdx !== additionIndex);
+        
+        return {
+          ...p,
+          Purchase_Sell: newPrice,
+          additions: updatedAdditions,
+        };
+      }
+      return p;
+    });
+    
+    updateActiveBoard({ products: newProducts });
+  };
+
+  // Discount handler
+  const handleApplyDiscount = async () => {
+    if (!discountCode.trim()) return;
+    
+    setIsValidatingDiscount(true);
+    try {
+      // Fetch discount from Firestore
+      const discountsRef = collection(db, 'Discount');
+      const q = firestoreQuery(discountsRef, where('code', '==', discountCode.trim()));
+      const querySnapshot = await getDocs(q);
+      
+      if (!querySnapshot.empty) {
+        const discountData = querySnapshot.docs[0].data();
+        setAppliedDiscount(discountData);
+      } else {
+        alert('Código de descuento no válido');
+        setDiscountCode('');
+      }
+    } catch (error) {
+      console.error('Error applying discount:', error);
+      alert('Error al aplicar el descuento');
+    } finally {
+      setIsValidatingDiscount(false);
+    }
+  };
+
+  const handleRemoveDiscount = () => {
+    setAppliedDiscount(null);
+    setDiscountCode('');
+  };
+
+  // Calculate totals with discount
+  const calculateTotals = () => {
+    if (!activeBoard) return { subtotal: 0, discount: 0, total: 0 };
+    
+    const subtotal = activeBoard.products.reduce((sum, p) => sum + (p.Purchase_Sell || 0) * p.quantity, 0);
+    
+    if (!appliedDiscount) {
+      return { subtotal, discount: 0, total: subtotal };
+    }
+
+    const discountPercentage = appliedDiscount.percentaje || 0;
+    let discountAmount = 0;
+
+    if (appliedDiscount.products && appliedDiscount.products.length > 0) {
+      // Apply discount only to specific products
+      discountAmount = activeBoard.products.reduce((sum, p) => {
+        // Check if product is in the discount's products array
+        const productId = p.firestoreId || p.id;
+        const productDiscount = appliedDiscount.products.some(ref => {
+          const refId = ref.path ? ref.path.split('/')[1] : ref;
+          return refId === productId;
+        }) ? (p.Purchase_Sell * p.quantity * discountPercentage / 100) : 0;
+        return sum + productDiscount;
+      }, 0);
+    } else {
+      // Apply general discount to all products
+      discountAmount = subtotal * discountPercentage / 100;
+    }
+
+    return {
+      subtotal,
+      discount: discountAmount,
+      total: subtotal - discountAmount
+    };
+  };
+
+  const totals = calculateTotals();
   
   const total = activeBoard?.products.reduce((sum, p) => sum + (p.Purchase_Sell || 0) * p.quantity, 0) || 0;
 
@@ -734,165 +901,159 @@ Esta acción no se puede deshacer.`,
         <Receipt ref={receiptRef} invoice={invoiceToPrint} />
       </div>
 
-      <div className="invoice-container">
+      <div className="invoice-container-three-column">
         <h1 className="invoice-title">Facturación</h1>
         
-        <div className="invoice-layout">
-          {/* Left Side - Tables and Search */}
-          <div className="invoice-left-panel">
-            {/* Tables Section */}
-            <div className="tables-section">
-              <h2 className="section-title">Mesas Activas</h2>
-              <div className="boards-container">
-                {boards.map(board => {
-                  const boardTotal = board.products.reduce((sum, p) => sum + (p.Purchase_Sell || 0) * p.quantity, 0);
-                  return (
-                    <div
-                      key={board.firestoreId}
-                      className={`board-card ${board.firestoreId === activeBoardId ? 'active' : ''}`}
-                      onClick={() => handleTableSelect(board)}
-                    >
-                      <span className="board-name">{board.name}</span>
-                      <span className="board-total">${boardTotal.toFixed(2)}</span>
-                      <span className="board-items-count">{board.products.length} productos</span>
+        <div className="three-column-layout">
+          {/* Column 1: Tables (25%) */}
+          <div className="tables-column">
+            <h2 className="column-title">Mesas Activas</h2>
+            <div className="tables-container">
+              {boards.map(board => {
+                const boardTotal = board.products.reduce((sum, p) => sum + (p.Purchase_Sell || 0) * p.quantity, 0);
+                return (
+                  <div
+                    key={board.firestoreId}
+                    className={`table-card ${board.firestoreId === activeBoardId ? 'active' : ''}`}
+                    onClick={() => handleTableSelect(board)}
+                  >
+                    <div className="table-header">
+                      <span className="table-name">{board.name}</span>
                       <button 
-                        className="delete-board-btn"
+                        className="delete-table-btn"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDeleteTable(board);
                         }}
                         title="Eliminar mesa"
                       >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                           <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
                         </svg>
                       </button>
                     </div>
-                  );
-                })}
-                <button className="add-board-btn" onClick={handleAddBoard}>+</button>
-              </div>
-            </div>
-
-            {/* Search Section */}
-            {activeBoard && (
-              <div className="search-section">
-                <h2 className="section-title">Agregar Productos a {activeBoard.name}</h2>
-                
-                <div className="search-controls">
-                  <div className="search-row">
-                    <div className="search-field">
-                      <label className="search-label">Tipo de Búsqueda</label>
-                      <select
-                        value={searchMode}
-                        onChange={(e) => handleSearchModeChange(e.target.value)}
-                        className="search-mode-select"
-                      >
-                        <option value="name">Buscar por nombre</option>
-                        <option value="category">Buscar por categoría</option>
-                      </select>
+                    <div className="table-info">
+                      <span className="table-total">${boardTotal.toFixed(2)}</span>
+                      <span className="table-items">{board.products.length} productos</span>
                     </div>
-                    
-                    {searchMode === 'name' && (
-                      <div className="search-field">
-                        <label className="search-label">Nombre del Producto</label>
-                        <div className="invoice-search-container" ref={searchContainerRef}>
-                          <input
-                            type="text"
-                            placeholder="Buscar producto por nombre..."
-                            value={query}
-                            onChange={e => {
-                              setQuery(e.target.value);
-                              if (e.target.value.length > 0) {
-                                setSelectedCategory(null);
-                              }
-                            }}
-                            className="invoice-search-bar"
-                            disabled={isProductsLoading}
-                          />
-                          {filtered.length > 0 && (
-                            <ul className="invoice-autocomplete-list">
-                              {filtered.slice(0, 8).map((p, idx) => (
-                                <li
-                                  key={p.id}
-                                  className={`invoice-autocomplete-item ${highlightedIndex === idx ? 'highlighted' : ''}`}
-                                  onClick={() => handleProductSelect(p)}
-                                >
-                                  <div className="product-suggestion">
-                                    <span className="product-name">{p.Name}</span>
-                                    <div className="product-details">
-                                      <span className="product-price">${p.Purchase_Sell || 0}</span>
-                                      <span className={`product-stock ${p.Stock_Current <= (p.Stock_Minimum || 0) ? 'low-stock' : ''}`}>
-                                        Stock: {p.Stock_Current || 0}
-                                      </span>
-                                    </div>
-                                  </div>
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                          {query.length > 0 && filtered.length === 0 && !isProductsLoading && (
-                            <ul className="invoice-autocomplete-list">
-                              <li
-                                className="invoice-autocomplete-item custom-add"
-                                onClick={handleShowCustomItemForm}
-                              >
-                                + Añadir "{query}" como producto personalizado
-                              </li>
-                            </ul>
-                          )}
-                        </div>
-                      </div>
-                    )}
                   </div>
+                );
+              })}
+              <button className="add-table-btn" onClick={handleAddBoard}>
+                <span className="add-icon">+</span>
+                <span className="add-text">Nueva Mesa</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Column 2: Products (40%) */}
+          <div className="products-column">
+            <h2 className="column-title">Productos</h2>
+            {activeBoard ? (
+              <div className="products-section">
+                <div className="search-controls">
+                  <div className="search-mode-selector">
+                    <button 
+                      className={`mode-btn ${searchMode === 'name' ? 'active' : ''}`}
+                      onClick={() => handleSearchModeChange('name')}
+                    >
+                      Por Nombre
+                    </button>
+                    <button 
+                      className={`mode-btn ${searchMode === 'category' ? 'active' : ''}`}
+                      onClick={() => handleSearchModeChange('category')}
+                    >
+                      Por Categoría
+                    </button>
+                  </div>
+                  
+                  {searchMode === 'name' && (
+                    <div className="search-input-container" ref={searchContainerRef}>
+                      <input
+                        type="text"
+                        placeholder="Buscar producto..."
+                        value={query}
+                        onChange={e => {
+                          setQuery(e.target.value);
+                          if (e.target.value.length > 0) {
+                            setSelectedCategory(null);
+                          }
+                        }}
+                        className="product-search-input"
+                        disabled={isProductsLoading}
+                      />
+                      {filtered.length > 0 && (
+                        <ul className="search-results">
+                          {filtered.slice(0, 6).map((p, idx) => (
+                            <li
+                              key={p.id}
+                              className={`search-result-item ${highlightedIndex === idx ? 'highlighted' : ''}`}
+                              onClick={() => handleProductSelect(p)}
+                            >
+                              <span className="result-name">{p.Name}</span>
+                              <span className="result-price">${p.Purchase_Sell || 0}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      {query.length > 0 && filtered.length === 0 && !isProductsLoading && (
+                        <ul className="search-results">
+                          <li
+                            className="search-result-item custom-add"
+                            onClick={handleShowCustomItemForm}
+                          >
+                            + Añadir "{query}" como personalizado
+                          </li>
+                        </ul>
+                      )}
+                    </div>
+                  )}
 
                   {searchMode === 'category' && (
-                    <div className="category-section">
-                      <div className="category-grid">
-                        {categories.map(category => (
-                          <div
-                            key={category}
-                            className="category-card"
-                            onClick={() => handleCategorySelect(category)}
-                          >
-                            <span className="category-name">{category}</span>
-                            <span className="category-count">
-                              {allProducts.filter(p => p.Category === category).length} productos
-                            </span>
-                          </div>
-                        ))}
-                      </div>
+                    <div className="categories-grid">
+                      {categories.map(category => (
+                        <div
+                          key={category}
+                          className="category-item"
+                          onClick={() => handleCategorySelect(category)}
+                        >
+                          <span className="category-name">{category}</span>
+                          <span className="category-count">
+                            {allProducts.filter(p => p.Category === category).length}
+                          </span>
+                        </div>
+                      ))}
                     </div>
                   )}
 
                   {/* Category Products Display */}
                   {selectedCategory && categoryProducts.length > 0 && (
-                    <div className="category-products-section">
+                    <div className="category-products">
                       <div className="category-header">
-                        <h3 className="category-title">Productos en {selectedCategory}</h3>
+                        <h3 className="category-title">{selectedCategory}</h3>
                         <button 
-                          className="clear-category-btn"
+                          className="back-btn"
                           onClick={handleClearCategory}
                         >
-                          ← Volver a categorías
+                          ← Volver
                         </button>
                       </div>
-                      <div className="category-products-grid">
+                      <div className="products-grid">
                         {categoryProducts.map(product => (
                           <div
                             key={product.id}
-                            className="product-card"
+                            className="product-item"
                             onClick={() => handleProductSelect(product)}
                           >
-                            <div className="product-card-header">
-                              <span className="product-card-name">{product.Name}</span>
-                              <span className="product-card-price">${product.Purchase_Sell || 0}</span>
+                            <div className="product-item-header">
+                              <span className="product-item-name">{product.Name}</span>
+                              <span className="product-item-price">${product.Purchase_Sell || 0}</span>
                             </div>
-                            <div className="product-card-details">
+                            <div className="product-item-details">
                               {product.Brand && (
-                                <span className="product-card-brand">{product.Brand}</span>
+                                <span className="product-item-brand">{product.Brand}</span>
                               )}
-                              <span className={`product-card-stock ${product.Stock_Current <= (product.Stock_Minimum || 0) ? 'low-stock' : ''}`}>
+                              <span className={`product-item-stock ${product.Stock_Current <= (product.Stock_Minimum || 0) ? 'low-stock' : ''}`}>
                                 Stock: {product.Stock_Current || 0}
                               </span>
                             </div>
@@ -903,70 +1064,171 @@ Esta acción no se puede deshacer.`,
                   )}
                 </div>
               </div>
+            ) : (
+              <div className="no-table-selected">
+                <p>Selecciona una mesa para agregar productos</p>
+              </div>
             )}
           </div>
 
-          {/* Right Side - Invoice Details */}
-          <div className="invoice-right-panel">
+          {/* Column 3: Invoice (35%) */}
+          <div className="invoice-column">
+            <h2 className="column-title">Factura</h2>
             {activeBoard ? (
               <div className="invoice-details">
-                <h2 className="invoice-details-title">Factura - {activeBoard.name}</h2>
-                <ul className="invoice-product-list">
+                <div className="invoice-header">
+                  <h3 className="invoice-table-name">{activeBoard.name}</h3>
+                  <span className="invoice-items-count">{activeBoard.products.length} productos</span>
+                </div>
+                
+                <div className="invoice-items">
                   {activeBoard.products.map((p, idx) => (
-                    <li key={p.id || idx} className="invoice-product-item">
-                      <span className="product-line">
-                        <span className="product-name-display">
-                          {p.Name}
+                    <div key={p.id || idx} className="invoice-item">
+                      <div className="item-main">
+                        <div className="item-info">
+                          <span className="item-name">{p.Name}</span>
                           {!p.isCustom && p.Stock_Current !== undefined && (
-                            <span className={`product-stock-indicator ${p.Stock_Current <= (p.Stock_Minimum || 0) ? 'low-stock' : ''}`}>
-                              (Stock: {p.Stock_Current})
+                            <span className={`item-stock ${p.Stock_Current <= (p.Stock_Minimum || 0) ? 'low-stock' : ''}`}>
+                              Stock: {p.Stock_Current}
                             </span>
                           )}
-                        </span>
-                        <div className="product-inputs">
-                          x
-                          <input
-                            type="number"
-                            min="1"
-                            max={!p.isCustom && p.Stock_Current !== undefined ? p.Stock_Current : undefined}
-                            value={p.quantity}
-                            onChange={e => handleQuantityChange(idx, e.target.value)}
-                            className="quantity-input"
-                          />
-                          @ $
-                          <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={p.Purchase_Sell}
-                            onChange={e => handlePriceChange(idx, e.target.value)}
-                            className="price-input"
-                          />
-                          <span className="product-total-line">= ${(p.Purchase_Sell * p.quantity).toFixed(2)}</span>
                         </div>
-                      </span>
-                      <button className="invoice-remove-btn" onClick={() => handleRemoveProduct(idx)}>
-                        Quitar
-                      </button>
-                    </li>
+                        <div className="item-controls">
+                          <div className="quantity-control">
+                            <label>x</label>
+                            <input
+                              type="number"
+                              min="1"
+                              max={!p.isCustom && p.Stock_Current !== undefined ? p.Stock_Current : undefined}
+                              value={p.quantity}
+                              onChange={e => handleQuantityChange(idx, e.target.value)}
+                              className="quantity-input"
+                            />
+                          </div>
+                          <div className="price-control">
+                            <label>@ $</label>
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={p.Purchase_Sell}
+                              onChange={e => handlePriceChange(idx, e.target.value)}
+                              className="price-input"
+                            />
+                          </div>
+                          <span className="item-total">${(p.Purchase_Sell * p.quantity).toFixed(2)}</span>
+                        </div>
+                        <div className="item-actions">
+                          <button 
+                            className="addition-btn" 
+                            onClick={() => handleShowAdditionModal(idx)}
+                            title="Agregar adición"
+                          >
+                            +
+                          </button>
+                          <button className="remove-btn" onClick={() => handleRemoveProduct(idx)}>
+                            ×
+                          </button>
+                        </div>
+                      </div>
+                      
+                      {/* Display additions */}
+                      {p.additions && p.additions.length > 0 && (
+                        <div className="item-additions">
+                          {p.additions.map((addition, addIdx) => (
+                            <div key={addIdx} className="addition-item">
+                              <span className="addition-name">{addition.name}</span>
+                              <span className="addition-price">+${addition.price.toFixed(2)}</span>
+                              <button 
+                                className="remove-addition-btn"
+                                onClick={() => handleRemoveAddition(idx, addIdx)}
+                                title="Quitar adición"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   ))}
-                </ul>
-                <div className="invoice-total-section">
-                  <strong className="invoice-total">Total: ${activeBoard.products.reduce((sum, p) => sum + (p.Purchase_Sell || 0) * p.quantity, 0).toFixed(2)}</strong>
-                  <button
-                    className="inventory-add-btn"
-                    onClick={handleSaveInvoice}
-                    type="button"
-                    disabled={activeBoard.products.length === 0}
-                  >
-                    Finalizar y Registrar Compra
-                  </button>
+                  
+                  {/* Total and Finalize Button - Now follows the last product */}
+                  {activeBoard.products.length > 0 && (
+                    <div className="invoice-footer-inline">
+                      {/* Discount Input */}
+                      <div className="discount-section">
+                        <label htmlFor="discount-code" className="discount-label">Código de descuento:</label>
+                        <div className="discount-input-group">
+                          {!appliedDiscount ? (
+                            <>
+                              <input
+                                id="discount-code"
+                                type="text"
+                                value={discountCode}
+                                onChange={(e) => setDiscountCode(e.target.value)}
+                                placeholder="Ingresa el código"
+                                className="discount-input"
+                              />
+                              <button
+                                className="apply-discount-btn"
+                                onClick={handleApplyDiscount}
+                                disabled={!discountCode.trim() || isValidatingDiscount}
+                              >
+                                {isValidatingDiscount ? 'Validando...' : 'Aplicar'}
+                              </button>
+                            </>
+                          ) : (
+                            <div className="applied-discount">
+                              <span className="discount-name">Descuento aplicado ({appliedDiscount.percentaje}%)</span>
+                              <button className="remove-discount-btn" onClick={handleRemoveDiscount}>
+                                ×
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Totals */}
+                      <div className="invoice-totals">
+                        <div className="total-row">
+                          <span className="total-label">Subtotal:</span>
+                          <span className="total-amount">${totals.subtotal.toFixed(2)}</span>
+                        </div>
+                        {appliedDiscount && (
+                          <div className="total-row discount-row">
+                            <span className="total-label">Descuento:</span>
+                            <span className="total-amount discount-amount">-${totals.discount.toFixed(2)}</span>
+                          </div>
+                        )}
+                        <div className="total-row final-total">
+                          <span className="total-label">Total:</span>
+                          <span className="total-amount final-amount">${totals.total.toFixed(2)}</span>
+                        </div>
+                      </div>
+
+                      <button
+                        className="finalize-btn"
+                        onClick={handleSaveInvoice}
+                        disabled={activeBoard.products.length === 0}
+                      >
+                        Finalizar Compra
+                      </button>
+                    </div>
+                  )}
                 </div>
+                
+                {/* Empty state when no products */}
+                {activeBoard.products.length === 0 && (
+                  <div className="empty-invoice-state">
+                    <p>No hay productos en esta mesa</p>
+                    <p className="empty-state-hint">Agrega productos desde la columna de productos</p>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="no-invoice-selected">
-                <h2 className="invoice-details-title">Selecciona una Mesa</h2>
-                <p>Haz clic en una mesa para ver sus detalles y agregar productos.</p>
+                <p>Selecciona una mesa para ver la factura</p>
               </div>
             )}
           </div>
@@ -995,6 +1257,40 @@ Esta acción no se puede deshacer.`,
             <div className="custom-item-actions">
               <button onClick={handleAddCustomItem} className="custom-item-btn add">Agregar</button>
               <button onClick={() => setCustomItem({ showForm: false, name: '', price: '' })} className="custom-item-btn cancel">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Addition Modal */}
+      {additionModal.show && (
+        <div className="custom-item-modal-overlay">
+          <div className="custom-item-form">
+            <h3>Agregar Adición a {additionModal.productName}</h3>
+            <input
+              type="text"
+              value={additionModal.additionName}
+              onChange={(e) => setAdditionModal({ ...additionModal, additionName: e.target.value })}
+              placeholder="Nombre de la adición (ej: Alcohol, Leche extra)"
+              className="custom-item-input"
+            />
+            <input
+              type="number"
+              value={additionModal.additionPrice}
+              onChange={(e) => setAdditionModal({ ...additionModal, additionPrice: e.target.value })}
+              placeholder="Precio adicional"
+              className="custom-item-input"
+              min="0"
+              step="0.01"
+            />
+            <div className="custom-item-actions">
+              <button onClick={handleAddAddition} className="custom-item-btn add">Agregar Adición</button>
+              <button 
+                onClick={() => setAdditionModal({ show: false, productIndex: null, productName: '', additionName: '', additionPrice: '' })} 
+                className="custom-item-btn cancel"
+              >
+                Cancelar
+              </button>
             </div>
           </div>
         </div>
