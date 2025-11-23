@@ -273,8 +273,64 @@ const Invoice = () => {
   };
 
   // Handle adding a new board
-  const handleAddBoard = async () => {
-    const newMesaName = `Mesa ${boards.length + 1}`;
+  const handleAddBoard = async (tableNumber = null) => {
+    // If tableNumber is provided, use it; otherwise find the first available
+    let newTableNumber = tableNumber;
+    
+    if (!newTableNumber) {
+      const existingTableNumbers = boards.map(b => {
+        const match = b.name.match(/Mesa\s*(\d+)/i);
+        return match ? parseInt(match[1]) : null;
+      }).filter(Boolean);
+      
+      for (let i = 1; i <= 6; i++) {
+        if (!existingTableNumbers.includes(i)) {
+          newTableNumber = i;
+          break;
+        }
+      }
+    }
+    
+    // Check if we already have 6 tables
+    if (boards.length >= 6) {
+      setModalConfig({ 
+        show: true, 
+        variant: 'warning', 
+        title: 'Límite de Mesas', 
+        message: 'Ya se han creado todas las mesas disponibles (6 mesas máximo).' 
+      });
+      return;
+    }
+    
+    // Check if the specific table number is already taken
+    if (newTableNumber) {
+      const existingTableNumbers = boards.map(b => {
+        const match = b.name.match(/Mesa\s*(\d+)/i);
+        return match ? parseInt(match[1]) : null;
+      }).filter(Boolean);
+      
+      if (existingTableNumbers.includes(newTableNumber)) {
+        setModalConfig({ 
+          show: true, 
+          variant: 'warning', 
+          title: 'Mesa Ocupada', 
+          message: `La Mesa ${newTableNumber} ya está activa.` 
+        });
+        return;
+      }
+    }
+    
+    if (!newTableNumber) {
+      setModalConfig({ 
+        show: true, 
+        variant: 'error', 
+        title: 'Error', 
+        message: 'No se puede crear más mesas. Límite alcanzado.' 
+      });
+      return;
+    }
+    
+    const newMesaName = `Mesa ${newTableNumber}`;
     try {
       const newInvoiceDoc = await addDoc(collection(db, "Invoice"), {
         Date: new Date(),
@@ -384,12 +440,13 @@ Esta acción no se puede deshacer.`,
       const total = currentTotals.total;
       const amountPaid = Number(cashAmountPaid);
       
-      if (!cashAmountPaid || amountPaid <= 0) {
+      // Validate that the amount is a valid number
+      if (!cashAmountPaid || isNaN(amountPaid) || amountPaid <= 0) {
         setModalConfig({ 
           show: true, 
           variant: 'error', 
           title: 'Monto Inválido', 
-          message: 'Por favor, ingresa el monto que pagó el cliente.',
+          message: 'Por favor, ingresa un monto válido que pagó el cliente.',
           onConfirm: null
         });
         return;
@@ -918,19 +975,6 @@ Esta acción no se puede deshacer.`,
      return <PageLayout pageTitle="Factura"><p>Cargando datos de la tienda...</p></PageLayout>
   }
 
-  if (boards.length === 0) {
-    return (
-      <PageLayout pageTitle="Factura">
-        <div className="invoice-container centered-prompt">
-          <p>No hay mesas activas.</p>
-          <button className="add-board-btn big" onClick={handleAddBoard}>
-            + Abrir Primera Mesa
-          </button>
-        </div>
-      </PageLayout>
-    );
-  }
-
   return (
     <PageLayout pageTitle="Factura">
       <CustomModal
@@ -996,14 +1040,22 @@ Esta acción no se puede deshacer.`,
                   step="0.01"
                   value={cashAmountPaid}
                   onChange={(e) => {
-                    const value = e.target.value.replace(/[^0-9.]/g, '');
+                    let value = e.target.value;
+                    // Remove any non-numeric characters except decimal point
+                    value = value.replace(/[^0-9.]/g, '');
+                    // Ensure only one decimal point
+                    const parts = value.split('.');
+                    if (parts.length > 2) {
+                      // If more than one decimal point, keep only the first one
+                      value = parts[0] + '.' + parts.slice(1).join('');
+                    }
                     setCashAmountPaid(value);
                   }}
                   placeholder={`Total: $${totals.total.toLocaleString()}`}
                   className="cash-amount-input"
                   autoFocus
                 />
-                {cashAmountPaid && Number(cashAmountPaid) > 0 && (
+                {cashAmountPaid && !isNaN(Number(cashAmountPaid)) && Number(cashAmountPaid) > 0 && (
                   <>
                     {Number(cashAmountPaid) >= totals.total ? (
                       <div className="change-calculation">
@@ -1026,7 +1078,7 @@ Esta acción no se puede deshacer.`,
               <button 
                 onClick={handleProcessInvoice} 
                 className="payment-confirm-btn"
-                disabled={paymentMethod === 'cash' && (!cashAmountPaid || Number(cashAmountPaid) < totals.total)}
+                disabled={paymentMethod === 'cash' && (!cashAmountPaid || isNaN(Number(cashAmountPaid)) || Number(cashAmountPaid) < totals.total)}
               >
                 Confirmar Pago
               </button>
@@ -1054,42 +1106,70 @@ Esta acción no se puede deshacer.`,
         <div className="three-column-layout">
           {/* Column 1: Tables (25%) */}
           <div className="tables-column">
-            <h2 className="column-title">Mesas Activas</h2>
+            <h2 className="column-title">Mesas</h2>
             <div className="tables-container">
-              {boards.map(board => {
-                const boardTotal = board.products.reduce((sum, p) => sum + (p.Purchase_Sell || 0) * p.quantity, 0);
-                return (
-                  <div
-                    key={board.firestoreId}
-                    className={`table-card ${board.firestoreId === activeBoardId ? 'active' : ''}`}
-                    onClick={() => handleTableSelect(board)}
-                  >
-                    <div className="table-header">
-                      <span className="table-name">{board.name}</span>
-                      <button 
-                        className="delete-table-btn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteTable(board);
-                        }}
-                        title="Eliminar mesa"
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
-                        </svg>
-                      </button>
+              {Array.from({ length: 6 }, (_, index) => {
+                const tableNumber = index + 1;
+                // Find board that matches this table number (exact match or contains the number)
+                const board = boards.find(b => {
+                  const match = b.name.match(/Mesa\s*(\d+)/i);
+                  return match && parseInt(match[1]) === tableNumber;
+                });
+                
+                if (board) {
+                  // Active table
+                  const boardTotal = board.products.reduce((sum, p) => sum + (p.Purchase_Sell || 0) * p.quantity, 0);
+                  return (
+                    <div
+                      key={board.firestoreId}
+                      className={`table-card ${board.firestoreId === activeBoardId ? 'active' : ''}`}
+                      onClick={() => handleTableSelect(board)}
+                    >
+                      <div className="table-header">
+                        <span className="table-name">{board.name}</span>
+                        <button 
+                          className="delete-table-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteTable(board);
+                          }}
+                          title="Eliminar mesa"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
+                          </svg>
+                        </button>
+                      </div>
+                      <div className="table-status active-status">
+                        <span className="status-badge active">Activa</span>
+                      </div>
+                      <div className="table-info">
+                        <span className="table-total">${boardTotal.toFixed(2)}</span>
+                        <span className="table-items">{board.products.length} productos</span>
+                      </div>
                     </div>
-                    <div className="table-info">
-                      <span className="table-total">${boardTotal.toFixed(2)}</span>
-                      <span className="table-items">{board.products.length} productos</span>
+                  );
+                } else {
+                  // Inactive/empty table slot
+                  return (
+                    <div
+                      key={`table-slot-${tableNumber}`}
+                      className="table-card inactive"
+                      onClick={() => handleAddBoard(tableNumber)}
+                    >
+                      <div className="table-header">
+                        <span className="table-name">Mesa {tableNumber}</span>
+                      </div>
+                      <div className="table-status inactive-status">
+                        <span className="status-badge inactive">No activa</span>
+                      </div>
+                      <div className="table-info">
+                        <span className="table-placeholder">Haz clic para abrir</span>
+                      </div>
                     </div>
-                  </div>
-                );
+                  );
+                }
               })}
-              <button className="add-table-btn" onClick={handleAddBoard}>
-                <span className="add-icon">+</span>
-                <span className="add-text">Nueva Mesa</span>
-              </button>
             </div>
           </div>
 
