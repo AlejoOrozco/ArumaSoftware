@@ -89,6 +89,7 @@ const Invoice = () => {
   // Payment method state
   const [paymentMethod, setPaymentMethod] = useState('cash'); // 'cash' or 'transfer'
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [cashAmountPaid, setCashAmountPaid] = useState('');
 
   const [invoiceToPrint, setInvoiceToPrint] = useState(null);
   const receiptRef = useRef();
@@ -374,7 +375,63 @@ Esta acción no se puede deshacer.`,
   // Process invoice completion with payment method
   const handleProcessInvoice = async () => {
     const boardToSave = activeBoard;
+    
+    // Recalculate totals to ensure we have the latest value
+    const currentTotals = calculateTotals();
+    
+    // If cash payment, validate and calculate change
+    if (paymentMethod === 'cash') {
+      const total = currentTotals.total;
+      const amountPaid = Number(cashAmountPaid);
+      
+      if (!cashAmountPaid || amountPaid <= 0) {
+        setModalConfig({ 
+          show: true, 
+          variant: 'error', 
+          title: 'Monto Inválido', 
+          message: 'Por favor, ingresa el monto que pagó el cliente.',
+          onConfirm: null
+        });
+        return;
+      }
+      
+      if (amountPaid < total) {
+        setModalConfig({ 
+          show: true, 
+          variant: 'error', 
+          title: 'Monto Insuficiente', 
+          message: `El monto pagado ($${amountPaid.toLocaleString()}) es menor al total ($${total.toLocaleString()}).`,
+          onConfirm: null
+        });
+        return;
+      }
+      
+      const change = amountPaid - total;
+      
+      // Show change calculation message
+      setShowPaymentModal(false);
+      setModalConfig({ 
+        show: true, 
+        variant: 'info', 
+        title: 'Cambio Calculado', 
+        message: `Total: $${total.toLocaleString()}\nMonto pagado: $${amountPaid.toLocaleString()}\n\nCambio a entregar: $${change.toLocaleString()}`,
+        onConfirm: () => {
+          setModalConfig({ show: false, onConfirm: null });
+          // Continue with invoice processing
+          processInvoiceAfterCashValidation();
+        }
+      });
+      return;
+    }
+    
+    // For transfer, proceed directly
     setShowPaymentModal(false);
+    processInvoiceAfterCashValidation();
+  };
+
+  // Separate function to process invoice after cash validation
+  const processInvoiceAfterCashValidation = async () => {
+    const boardToSave = activeBoard;
     setModalConfig({ show: true, isLoading: true, title: 'Verificando Inventario' });
 
     try {
@@ -419,14 +476,47 @@ Esta acción no se puede deshacer.`,
 
       setModalConfig({ show: true, isLoading: true, title: 'Registrando Compra' });
 
-      const finalTotal = boardToSave.products.reduce((sum, p) => sum + (p.Purchase_Sell || 0) * p.quantity, 0);
+      // Calculate final total including discount
+      const subtotal = boardToSave.products.reduce((sum, p) => sum + (p.Purchase_Sell || 0) * p.quantity, 0);
+      let discountAmount = 0;
+      
+      if (appliedDiscount) {
+        const discountPercentage = appliedDiscount.percentaje || 0;
+        if (appliedDiscount.products && appliedDiscount.products.length > 0) {
+          // Apply discount only to specific products
+          discountAmount = boardToSave.products.reduce((sum, p) => {
+            const productId = p.firestoreId || p.id;
+            const productDiscount = appliedDiscount.products.some(ref => {
+              const refId = ref.path ? ref.path.split('/')[1] : ref;
+              return refId === productId;
+            }) ? (p.Purchase_Sell * p.quantity * discountPercentage / 100) : 0;
+            return sum + productDiscount;
+          }, 0);
+        } else {
+          // Apply general discount to all products
+          discountAmount = subtotal * discountPercentage / 100;
+        }
+      }
+      
+      const finalTotal = subtotal - discountAmount;
+      
+      // Prepare payment data
+      const paymentData = {
+        paymentMethod: paymentMethod,
+      };
+      
+      // Add cash-specific data if payment is cash
+      if (paymentMethod === 'cash') {
+        paymentData.cashAmountPaid = Number(cashAmountPaid);
+        paymentData.cashChange = Number(cashAmountPaid) - finalTotal;
+      }
       
       // Update invoice status
       await updateDoc(doc(db, "Invoice", boardToSave.firestoreId), {
         status: 'completed',
         completionDate: new Date(),
         Total: finalTotal,
-        paymentMethod: paymentMethod, // Add payment method to invoice
+        ...paymentData,
       });
 
       // Update product stock for non-custom products
@@ -467,6 +557,10 @@ Esta acción no se puede deshacer.`,
         Date: new Date().toISOString(),
         Comment: boardToSave.comment,
         paymentMethod: paymentMethod,
+        ...(paymentMethod === 'cash' && {
+          cashAmountPaid: Number(cashAmountPaid),
+          cashChange: Number(cashAmountPaid) - finalTotal,
+        }),
       };
       
       const successMessage = productsWithStockUpdate > 0 
@@ -485,6 +579,9 @@ Esta acción no se puede deshacer.`,
           setActiveBoardId(remainingBoards.length > 0 ? remainingBoards[0].firestoreId : null);
           setShowInvoiceModal(false);
           setSelectedInvoice(null);
+          // Reset payment state
+          setCashAmountPaid('');
+          setPaymentMethod('cash');
         },
         showPrintButton: true,
         invoiceDataForPrint: savedInvoiceData,
@@ -864,7 +961,10 @@ Esta acción no se puede deshacer.`,
                   name="paymentMethod"
                   value="cash"
                   checked={paymentMethod === 'cash'}
-                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  onChange={(e) => {
+                    setPaymentMethod(e.target.value);
+                    setCashAmountPaid(''); // Reset cash amount when switching
+                  }}
                 />
                 <span className="payment-option-text">Efectivo</span>
               </label>
@@ -874,20 +974,67 @@ Esta acción no se puede deshacer.`,
                   name="paymentMethod"
                   value="transfer"
                   checked={paymentMethod === 'transfer'}
-                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  onChange={(e) => {
+                    setPaymentMethod(e.target.value);
+                    setCashAmountPaid(''); // Clear cash amount when switching
+                  }}
                 />
                 <span className="payment-option-text">Transferencia</span>
               </label>
             </div>
+            
+            {/* Cash amount input - only show when cash is selected */}
+            {paymentMethod === 'cash' && (
+              <div className="cash-amount-section">
+                <label htmlFor="cashAmount" className="cash-amount-label">
+                  Monto pagado por el cliente:
+                </label>
+                <input
+                  id="cashAmount"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={cashAmountPaid}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/[^0-9.]/g, '');
+                    setCashAmountPaid(value);
+                  }}
+                  placeholder={`Total: $${totals.total.toLocaleString()}`}
+                  className="cash-amount-input"
+                  autoFocus
+                />
+                {cashAmountPaid && Number(cashAmountPaid) > 0 && (
+                  <>
+                    {Number(cashAmountPaid) >= totals.total ? (
+                      <div className="change-calculation">
+                        <span className="change-label">Cambio a entregar:</span>
+                        <span className="change-amount">
+                          ${(Number(cashAmountPaid) - totals.total).toLocaleString()}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="change-warning">
+                        Monto insuficiente. Faltan: ${(totals.total - Number(cashAmountPaid)).toLocaleString()}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+            
             <div className="payment-modal-actions">
               <button 
                 onClick={handleProcessInvoice} 
                 className="payment-confirm-btn"
+                disabled={paymentMethod === 'cash' && (!cashAmountPaid || Number(cashAmountPaid) < totals.total)}
               >
                 Confirmar Pago
               </button>
               <button 
-                onClick={() => setShowPaymentModal(false)} 
+                onClick={() => {
+                  setShowPaymentModal(false);
+                  setCashAmountPaid('');
+                }} 
                 className="payment-cancel-btn"
               >
                 Cancelar

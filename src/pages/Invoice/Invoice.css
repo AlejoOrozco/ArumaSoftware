@@ -1475,6 +1475,91 @@
   background: #e0e0e0;
 }
 
+/* Cash Amount Section */
+.cash-amount-section {
+  margin: 20px 0;
+  padding: 16px;
+  background: rgba(139, 69, 19, 0.05);
+  border-radius: 8px;
+  border: 1px solid var(--coffee-border, #e0c9b3);
+}
+
+.cash-amount-label {
+  display: block;
+  font-weight: 600;
+  color: var(--coffee-brown, #6b3e26);
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+}
+
+.cash-amount-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid var(--coffee-border, #e0c9b3);
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--coffee-brown, #6b3e26);
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.cash-amount-input:focus {
+  outline: none;
+  border-color: var(--coffee-caramel, #a9744f);
+  box-shadow: 0 0 0 3px rgba(169, 116, 79, 0.1);
+}
+
+.cash-amount-input::placeholder {
+  color: #bba193;
+  font-weight: normal;
+}
+
+.change-calculation {
+  margin-top: 12px;
+  padding: 12px;
+  background: rgba(76, 175, 80, 0.1);
+  border: 2px solid rgba(76, 175, 80, 0.3);
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.change-label {
+  font-weight: 600;
+  color: var(--coffee-brown, #6b3e26);
+  font-size: 1rem;
+}
+
+.change-amount {
+  font-weight: 700;
+  color: #4caf50;
+  font-size: 1.3rem;
+}
+
+.change-warning {
+  margin-top: 12px;
+  padding: 12px;
+  background: rgba(211, 47, 47, 0.1);
+  border: 2px solid rgba(211, 47, 47, 0.3);
+  border-radius: 8px;
+  color: #d32f2f;
+  font-weight: 600;
+  text-align: center;
+  font-size: 0.95rem;
+}
+
+.payment-confirm-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.payment-confirm-btn:disabled:hover {
+  background: #ccc;
+}
+
 .receipt-print-wrapper {
   display: none;
 }
