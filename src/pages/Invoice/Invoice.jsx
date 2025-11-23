@@ -90,6 +90,7 @@ const Invoice = () => {
   const [paymentMethod, setPaymentMethod] = useState('cash'); // 'cash' or 'transfer'
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [cashAmountPaid, setCashAmountPaid] = useState('');
+  const [selectedBills, setSelectedBills] = useState({}); // Track count of each bill denomination
 
   const [invoiceToPrint, setInvoiceToPrint] = useState(null);
   const receiptRef = useRef();
@@ -639,6 +640,7 @@ Esta acción no se puede deshacer.`,
           // Reset payment state
           setCashAmountPaid('');
           setPaymentMethod('cash');
+          setSelectedBills({});
         },
         showPrintButton: true,
         invoiceDataForPrint: savedInvoiceData,
@@ -1008,6 +1010,7 @@ Esta acción no se puede deshacer.`,
                   onChange={(e) => {
                     setPaymentMethod(e.target.value);
                     setCashAmountPaid(''); // Reset cash amount when switching
+                    setSelectedBills({}); // Reset bills selection
                   }}
                 />
                 <span className="payment-option-text">Efectivo</span>
@@ -1033,6 +1036,66 @@ Esta acción no se puede deshacer.`,
                 <label htmlFor="cashAmount" className="cash-amount-label">
                   Monto pagado por el cliente:
                 </label>
+                
+                {/* Bill selection cards */}
+                <div className="bill-cards-container">
+                  <div className="bill-cards-grid">
+                    {[2000, 5000, 10000, 20000, 50000, 100000].map((billValue) => {
+                      const count = selectedBills[billValue] || 0;
+                      return (
+                        <button
+                          key={billValue}
+                          type="button"
+                          className={`bill-card ${count > 0 ? 'selected' : ''}`}
+                          onClick={() => {
+                            const newCount = (selectedBills[billValue] || 0) + 1;
+                            const updatedBills = { ...selectedBills, [billValue]: newCount };
+                            setSelectedBills(updatedBills);
+                            
+                            // Calculate total from all selected bills
+                            const billsTotal = Object.entries(updatedBills).reduce((sum, [value, count]) => {
+                              return sum + (Number(value) * count);
+                            }, 0);
+                            
+                            // Always update cash amount to reflect the sum of all bills
+                            setCashAmountPaid(billsTotal.toString());
+                          }}
+                        >
+                          <span className="bill-value">${billValue.toLocaleString()}</span>
+                          {count > 0 && <span className="bill-count">x{count}</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  
+                  {/* Clear bills button */}
+                  {Object.values(selectedBills).some(count => count > 0) && (
+                    <button
+                      type="button"
+                      className="clear-bills-btn"
+                      onClick={() => {
+                        // Calculate current bills total before clearing
+                        const billsTotal = Object.entries(selectedBills).reduce((sum, [value, count]) => {
+                          return sum + (Number(value) * count);
+                        }, 0);
+                        
+                        // Clear bills selection
+                        setSelectedBills({});
+                        
+                        // Clear cash amount if it matches the bills total (user was using bills)
+                        // Otherwise keep the manual input (user typed a custom amount)
+                        const currentAmount = cashAmountPaid ? Number(cashAmountPaid) : 0;
+                        if (Math.abs(currentAmount - billsTotal) < 0.01) {
+                          setCashAmountPaid('');
+                        }
+                      }}
+                    >
+                      Limpiar billetes
+                    </button>
+                  )}
+                </div>
+                
+                {/* Manual input */}
                 <input
                   id="cashAmount"
                   type="number"
@@ -1050,6 +1113,8 @@ Esta acción no se puede deshacer.`,
                       value = parts[0] + '.' + parts.slice(1).join('');
                     }
                     setCashAmountPaid(value);
+                    // Keep bills selection visible even when manually typing
+                    // User can still see what bills they selected and use clear button if needed
                   }}
                   placeholder={`Total: $${totals.total.toLocaleString()}`}
                   className="cash-amount-input"
@@ -1086,6 +1151,7 @@ Esta acción no se puede deshacer.`,
                 onClick={() => {
                   setShowPaymentModal(false);
                   setCashAmountPaid('');
+                  setSelectedBills({});
                 }} 
                 className="payment-cancel-btn"
               >
