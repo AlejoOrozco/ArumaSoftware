@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import Home from "./pages/Home/Home";
 import Menu from "./pages/Inventory/Menu/Menu";
 import AddProduct from "./pages/Inventory/AddProducts/AddProduct";
@@ -8,9 +8,9 @@ import AllProducts from "./pages/Inventory/AllProducts/AllProducts";
 import Discounts from "./pages/Inventory/Discounts/Discounts";
 import Invoice from "./pages/Invoice/Invoice";
 import CloseDay from "./pages/CloseDay/CloseDay";
-import "./App.css"; // For global styles and background
+import "./App.css";
 
-function App() {
+const App = () => {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
@@ -24,6 +24,7 @@ function App() {
       <Route path="/cerrar-dia" element={<CloseDay />} />
     </Routes>
   );
-}
+};
 
 export default App;
+

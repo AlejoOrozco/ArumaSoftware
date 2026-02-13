@@ -1,7 +1,6 @@
 import { Outlet } from "react-router-dom";
 import Sidebar from "../../components/Sidebar/Sidebar";
 import { SidebarProvider, useSidebar } from "../../contexts/SidebarContext";
-import { CompanyProvider } from "../../contexts/CompanyContext";
 import "./Layout.css";
 
 const MainContent = () => {
@@ -16,7 +15,7 @@ const MainContent = () => {
             isSidebarOpen ? "sidebar-open" : "sidebar-closed"
           }`}
         >
-          <Sidebar isOpen={isSidebarOpen} onCloseButtonClick={toggleSidebar} />
+          <Sidebar isOpen={isSidebarOpen} onClose={toggleSidebar} />
           <ContentArea />
         </div>
       </div>
@@ -43,10 +42,9 @@ const ContentArea = () => (
 
 const Layout = () => (
   <SidebarProvider>
-    <CompanyProvider>
-      <MainContent />
-    </CompanyProvider>
+    <MainContent />
   </SidebarProvider>
 );
 
 export default Layout;
+

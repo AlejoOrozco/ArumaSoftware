@@ -1,16 +1,18 @@
 import { useLocation, Link } from "react-router-dom";
-import routesConfig from "../../config/routesConfig";
+import routesConfig, { type RouteConfig } from "../../config/routesConfig";
 import "./Breadcrumb.css";
 
 const Breadcrumb = () => {
   const location = useLocation();
   const pathNames = location.pathname.split("/").filter((x) => x);
 
-  const findRouteDetails = (path) => {
-    const breadcrumbItem = routesConfig.find((route) => route.path === path);
+  const findRouteDetails = (path: string): { name: string; readableName: string } => {
+    const breadcrumbItem: RouteConfig | undefined = routesConfig.find(
+      (route) => route.path === path
+    );
     return breadcrumbItem
       ? {
-          name: breadcrumbItem.componentName,
+          name: breadcrumbItem.path,
           readableName: breadcrumbItem.title,
         }
       : {
@@ -27,7 +29,7 @@ const Breadcrumb = () => {
             <i className="bi bi-house-door-fill"></i>
           </Link>
         </div>
-        {pathNames.map((value, index) => {
+        {pathNames.map((_, index) => {
           const to = `/${pathNames.slice(0, index + 1).join("/")}`;
           return (
             <div key={to} className="breadcrumb-item">
@@ -43,3 +45,4 @@ const Breadcrumb = () => {
 };
 
 export default Breadcrumb;
+
