@@ -1,113 +1,125 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState, type ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { db } from "../../../config/firebaseConfig";
 import { collection, getDocs, doc, deleteDoc } from "firebase/firestore";
 import PageLayout from "../../../components/common/PageLayout";
 import "./AllProducts.css";
 
+type Product = {
+  id: string;
+  Name?: string;
+  Purchase_Sell?: number;
+  Stock_Current: number;
+  Stock_Minimum?: number | null;
+  Weight?: number | string;
+  Unit_Measure?: string;
+  Brand?: string | null;
+  Category?: string | null;
+};
+
 const AllProducts = () => {
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
-  const [filteredProducts, setFilteredProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [message, setMessage] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
   const navigate = useNavigate();
 
-  // Fetch all products on mount
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         const snapshot = await getDocs(collection(db, "Product"));
-        const prods = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
+        const prods: Product[] = snapshot.docs.map((docSnap) => ({
+          id: docSnap.id,
+          ...(docSnap.data() as Omit<Product, "id">),
         }));
         setProducts(prods);
         setFilteredProducts(prods);
         setLoading(false);
-      } catch (error) {
-        setMessage("Error al cargar productos: " + error.message);
+      } catch (error: unknown) {
+        const message =
+          error instanceof Error ? error.message : "Error desconocido al cargar productos";
+        setMessage("Error al cargar productos: " + message);
         setLoading(false);
       }
     };
     fetchProducts();
   }, []);
 
-  // Get unique categories from products
   const getUniqueCategories = () => {
     const categories = products
-      .map(product => product.Category)
-      .filter(category => category && category.trim() !== "")
+      .map((product) => product.Category)
+      .filter((category): category is string => !!category && category.trim() !== "")
       .filter((category, index, self) => self.indexOf(category) === index)
       .sort();
     return categories;
   };
 
-  // Filter products based on search query and category
   useEffect(() => {
-    let filtered = products;
+    let filtered: Product[] = products;
 
-    // Filter by search query
     if (searchQuery.trim() !== "") {
-      filtered = filtered.filter(product =>
-        product.Name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.Brand?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.Category?.toLowerCase().includes(searchQuery.toLowerCase())
+      const lower = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (product) =>
+          product.Name?.toLowerCase().includes(lower) ||
+          product.Brand?.toLowerCase().includes(lower) ||
+          product.Category?.toLowerCase().includes(lower)
       );
     }
 
-    // Filter by category
     if (selectedCategory !== "") {
-      filtered = filtered.filter(product => product.Category === selectedCategory);
+      filtered = filtered.filter(
+        (product) => product.Category === selectedCategory
+      );
     }
 
     setFilteredProducts(filtered);
-    setCurrentPage(1); // Reset to first page when filtering
+    setCurrentPage(1);
   }, [searchQuery, selectedCategory, products]);
 
-  // Calculate pagination
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentProducts = filteredProducts.slice(startIndex, endIndex);
 
-  // Handle product deletion
-  const handleDeleteProduct = async (productId, productName) => {
-    if (window.confirm(`¿Estás seguro de que quieres eliminar "${productName}"?`)) {
+  const handleDeleteProduct = async (productId: string, productName?: string) => {
+    if (
+      window.confirm(
+        `¿Estás seguro de que quieres eliminar "${productName ?? "este producto"}"?`
+      )
+    ) {
       try {
         await deleteDoc(doc(db, "Product", productId));
-        setProducts(products.filter(p => p.id !== productId));
+        setProducts((prev) => prev.filter((p) => p.id !== productId));
         setMessage(`Producto "${productName}" eliminado correctamente`);
         setTimeout(() => setMessage(""), 3000);
-      } catch (error) {
-        setMessage("Error al eliminar producto: " + error.message);
+      } catch (error: unknown) {
+        const message =
+          error instanceof Error ? error.message : "Error desconocido al eliminar producto";
+        setMessage("Error al eliminar producto: " + message);
       }
     }
   };
 
-  // Handle product editing - navigate to edit page with product data
-  const handleEditProduct = (product) => {
-    // Store product data in localStorage for the edit page to access
-    localStorage.setItem('editProductData', JSON.stringify(product));
-    navigate('/inventario/editar');
+  const handleEditProduct = (product: Product) => {
+    localStorage.setItem("editProductData", JSON.stringify(product));
+    navigate("/inventario/editar");
   };
 
-  // Handle page change
-  const handlePageChange = (page) => {
+  const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
 
-  // Handle items per page change
-  const handleItemsPerPageChange = (e) => {
-    const newItemsPerPage = parseInt(e.target.value);
+  const handleItemsPerPageChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    const newItemsPerPage = parseInt(e.target.value, 10);
     setItemsPerPage(newItemsPerPage);
-    setCurrentPage(1); // Reset to first page
+    setCurrentPage(1);
   };
 
-  // Clear filters
   const clearFilters = () => {
     setSearchQuery("");
     setSelectedCategory("");
@@ -132,7 +144,6 @@ const AllProducts = () => {
           Gestiona todos los productos del inventario de Aruma Café
         </p>
 
-        {/* Search and Filter Controls */}
         <div className="controls-container">
           <div className="search-container">
             <input
@@ -143,7 +154,7 @@ const AllProducts = () => {
               className="search-input"
             />
           </div>
-          
+
           <div className="filter-container">
             <select
               value={selectedCategory}
@@ -151,13 +162,13 @@ const AllProducts = () => {
               className="category-filter"
             >
               <option value="">Todas las categorías</option>
-              {getUniqueCategories().map(category => (
+              {getUniqueCategories().map((category) => (
                 <option key={category} value={category}>
                   {category}
                 </option>
               ))}
             </select>
-            
+
             <select
               value={itemsPerPage}
               onChange={handleItemsPerPageChange}
@@ -168,7 +179,7 @@ const AllProducts = () => {
               <option value={15}>15 por página</option>
               <option value={20}>20 por página</option>
             </select>
-            
+
             <button
               onClick={clearFilters}
               className="clear-filters-btn"
@@ -179,18 +190,22 @@ const AllProducts = () => {
           </div>
         </div>
 
-        {/* Message Display */}
         {message && (
-          <div className={`message ${message.includes('Error') ? 'error' : 'success'}`}>
+          <div
+            className={`message ${
+              message.includes("Error") ? "error" : "success"
+            }`}
+          >
             {message}
           </div>
         )}
 
-        {/* Products Table */}
         <div className="table-container">
           {filteredProducts.length === 0 ? (
             <div className="no-products">
-              {searchQuery || selectedCategory ? 'No se encontraron productos que coincidan con los filtros.' : 'No hay productos registrados.'}
+              {searchQuery || selectedCategory
+                ? "No se encontraron productos que coincidan con los filtros."
+                : "No hay productos registrados."}
             </div>
           ) : (
             <>
@@ -211,14 +226,26 @@ const AllProducts = () => {
                   {currentProducts.map((product) => (
                     <tr key={product.id} className="product-row">
                       <td className="product-name">{product.Name}</td>
-                      <td className="product-price">${product.Purchase_Sell?.toLocaleString()}</td>
-                      <td className={`product-stock ${product.Stock_Current <= (product.Stock_Minimum || 0) ? 'low-stock' : ''}`}>
+                      <td className="product-price">
+                        ${product.Purchase_Sell?.toLocaleString()}
+                      </td>
+                      <td
+                        className={`product-stock ${
+                          product.Stock_Current <= (product.Stock_Minimum || 0)
+                            ? "low-stock"
+                            : ""
+                        }`}
+                      >
                         {product.Stock_Current}
                       </td>
                       <td className="product-weight">{product.Weight}</td>
                       <td className="product-unit">{product.Unit_Measure}</td>
-                      <td className="product-brand">{product.Brand || '-'}</td>
-                      <td className="product-category">{product.Category || '-'}</td>
+                      <td className="product-brand">
+                        {product.Brand || "-"}
+                      </td>
+                      <td className="product-category">
+                        {product.Category || "-"}
+                      </td>
                       <td className="product-actions">
                         <button
                           className="edit-btn"
@@ -229,7 +256,9 @@ const AllProducts = () => {
                         </button>
                         <button
                           className="delete-btn"
-                          onClick={() => handleDeleteProduct(product.id, product.Name)}
+                          onClick={() =>
+                            handleDeleteProduct(product.id, product.Name)
+                          }
                           title="Eliminar producto"
                         >
                           Eliminar
@@ -240,11 +269,12 @@ const AllProducts = () => {
                 </tbody>
               </table>
 
-              {/* Pagination */}
               {totalPages > 1 && (
                 <div className="pagination-container">
                   <div className="pagination-info">
-                    Mostrando {startIndex + 1}-{Math.min(endIndex, filteredProducts.length)} de {filteredProducts.length} productos
+                    Mostrando {startIndex + 1}-
+                    {Math.min(endIndex, filteredProducts.length)} de{" "}
+                    {filteredProducts.length} productos
                   </div>
                   <div className="pagination-controls">
                     <button
@@ -254,17 +284,21 @@ const AllProducts = () => {
                     >
                       Anterior
                     </button>
-                    
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                      <button
-                        key={page}
-                        className={`pagination-btn ${currentPage === page ? 'active' : ''}`}
-                        onClick={() => handlePageChange(page)}
-                      >
-                        {page}
-                      </button>
-                    ))}
-                    
+
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                      (page) => (
+                        <button
+                          key={page}
+                          className={`pagination-btn ${
+                            currentPage === page ? "active" : ""
+                          }`}
+                          onClick={() => handlePageChange(page)}
+                        >
+                          {page}
+                        </button>
+                      )
+                    )}
+
                     <button
                       className="pagination-btn"
                       onClick={() => handlePageChange(currentPage + 1)}
@@ -279,16 +313,22 @@ const AllProducts = () => {
           )}
         </div>
 
-        {/* Summary */}
         <div className="summary">
           <p>Total de productos: {filteredProducts.length}</p>
           {products.length > 0 && (
-            <p>Productos con stock bajo: {
-              products.filter(p => p.Stock_Current <= (p.Stock_Minimum || 0)).length
-            }</p>
+            <p>
+              Productos con stock bajo:{" "}
+              {
+                products.filter(
+                  (p) => p.Stock_Current <= (p.Stock_Minimum || 0)
+                ).length
+              }
+            </p>
           )}
           {filteredProducts.length > 0 && (
-            <p>Página {currentPage} de {totalPages}</p>
+            <p>
+              Página {currentPage} de {totalPages}
+            </p>
           )}
         </div>
       </div>
@@ -297,3 +337,4 @@ const AllProducts = () => {
 };
 
 export default AllProducts;
+

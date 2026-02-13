@@ -1,9 +1,27 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import './Receipt.css';
+import { forwardRef } from "react";
+import "./Receipt.css";
 
-const Receipt = React.forwardRef(({ invoice }, ref) => {
-  console.log('[Receipt] Rendering. invoice:', invoice, 'ref:', ref);
+export type ReceiptProduct = {
+  id?: string;
+  Name: string;
+  quantity: number;
+  Purchase_Sell: number;
+};
+
+export type ReceiptInvoice = {
+  Products: ReceiptProduct[];
+  Total: number;
+  Date: string;
+  Comment?: string;
+  paymentMethod?: string;
+};
+
+type ReceiptProps = {
+  invoice: ReceiptInvoice | null;
+};
+
+const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(({ invoice }, ref) => {
+  console.log("[Receipt] Rendering. invoice:", invoice, "ref:", ref);
   if (!invoice) {
     return null;
   }
@@ -44,12 +62,17 @@ const Receipt = React.forwardRef(({ invoice }, ref) => {
       </div>
       {paymentMethod && (
         <div className="receipt-payment">
-          <p><strong>Método de Pago:</strong> {paymentMethod === 'cash' ? 'Efectivo' : 'Transferencia'}</p>
+          <p>
+            <strong>Método de Pago:</strong>{" "}
+            {paymentMethod === "cash" ? "Efectivo" : "Transferencia"}
+          </p>
         </div>
       )}
       {Comment && (
         <div className="receipt-footer">
-          <p><strong>Comentario:</strong> {Comment}</p>
+          <p>
+            <strong>Comentario:</strong> {Comment}
+          </p>
         </div>
       )}
       <div className="receipt-footer">
@@ -59,18 +82,5 @@ const Receipt = React.forwardRef(({ invoice }, ref) => {
   );
 });
 
-Receipt.propTypes = {
-  invoice: PropTypes.shape({
-    Products: PropTypes.arrayOf(PropTypes.object).isRequired,
-    Total: PropTypes.number.isRequired,
-    Date: PropTypes.string.isRequired,
-    Comment: PropTypes.string,
-    paymentMethod: PropTypes.string,
-  }),
-};
+export default Receipt;
 
-Receipt.defaultProps = {
-  invoice: null,
-};
-
-export default Receipt; 

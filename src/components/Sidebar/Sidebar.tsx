@@ -1,12 +1,22 @@
-import React from 'react';
 import { NavLink } from "react-router-dom";
-import { FaHome, FaCog, FaChartBar, FaFileInvoiceDollar, FaTimes, FaCalendarDay } from "react-icons/fa";
+import {
+  FaHome,
+  FaChartBar,
+  FaFileInvoiceDollar,
+  FaTimes,
+  FaCalendarDay,
+} from "react-icons/fa";
 import "./Sidebar.css";
 
-const Sidebar = ({ isOpen, onClose }) => (
+type SidebarProps = {
+  isOpen: boolean;
+  onClose: () => void;
+};
+
+const Sidebar = ({ isOpen, onClose }: SidebarProps) => (
   <>
-    <div className={`sidebar-overlay ${isOpen ? 'show' : ''}`} onClick={onClose}></div>
-    <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
+    <div className={`sidebar-overlay ${isOpen ? "show" : ""}`} onClick={onClose}></div>
+    <aside className={`sidebar ${isOpen ? "open" : ""}`}>
       <div className="sidebar-header">
         <div className="sidebar-logo">
           Aruma Café <span className="sidebar-logo-cursive">Software</span>
@@ -34,3 +44,4 @@ const Sidebar = ({ isOpen, onClose }) => (
 );
 
 export default Sidebar;
+

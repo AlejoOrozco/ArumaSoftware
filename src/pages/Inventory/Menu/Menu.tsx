@@ -1,4 +1,3 @@
-import React from "react";
 import { useNavigate } from "react-router-dom";
 import PageLayout from "../../../components/common/PageLayout";
 import "./Menu.css";
@@ -45,3 +44,4 @@ const Menu = () => {
 };
 
 export default Menu;
+

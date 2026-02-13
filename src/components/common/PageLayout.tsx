@@ -1,10 +1,15 @@
-import React, { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { type ReactNode, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { FaHome, FaBars } from "react-icons/fa";
-import Sidebar from "../Sidebar/Sidebar"; // Assuming this is the correct path
+import Sidebar from "../Sidebar/Sidebar";
 import "./PageLayout.css";
 
-const PageLayout = ({ children, pageTitle }) => {
+type PageLayoutProps = {
+  children: ReactNode;
+  pageTitle: string;
+};
+
+const PageLayout = ({ children, pageTitle }: PageLayoutProps) => {
   const navigate = useNavigate();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
 
@@ -24,12 +29,11 @@ const PageLayout = ({ children, pageTitle }) => {
             <span className="layout-navbar-title">{pageTitle}</span>
           </div>
         </div>
-        <main className="layout-content">
-          {children}
-        </main>
+        <main className="layout-content">{children}</main>
       </div>
     </div>
   );
 };
 
 export default PageLayout;
+

@@ -1,16 +1,41 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, type ChangeEvent, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { db } from "../../../config/firebaseConfig";
 import { doc, updateDoc } from "firebase/firestore";
 import PageLayout from "../../../components/common/PageLayout";
 import "./EditProduct.css";
 
-const unitOptions = ["ML", "L", "G", "KG"];
+type Product = {
+  id: string;
+  Name?: string;
+  Purchase_Sell?: number;
+  Stock_Current?: number;
+  Weight?: number;
+  Unit_Measure?: string;
+  Brand?: string | null;
+  Category?: string | null;
+  Purchase_Price?: number | null;
+  Stock_Minimum?: number | null;
+};
+
+type ProductForm = {
+  Name: string;
+  Purchase_Sell: string;
+  Stock_Current: string;
+  Weight: string;
+  Unit_Measure: string;
+  Brand: string;
+  Category: string;
+  Purchase_Price: string;
+  Stock_Minimum: string;
+};
+
+const unitOptions = ["ML", "L", "G", "KG"] as const;
 
 const EditProduct = () => {
   const navigate = useNavigate();
-  const [product, setProduct] = useState(null);
-  const [formData, setFormData] = useState({
+  const [product, setProduct] = useState<Product | null>(null);
+  const [formData, setFormData] = useState<ProductForm>({
     Name: "",
     Purchase_Sell: "",
     Stock_Current: "",
@@ -19,26 +44,23 @@ const EditProduct = () => {
     Brand: "",
     Category: "",
     Purchase_Price: "",
-    Stock_Minimum: ""
+    Stock_Minimum: "",
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // Check for product data in localStorage on mount
   useEffect(() => {
-    const productData = localStorage.getItem('editProductData');
+    const productData = localStorage.getItem("editProductData");
     if (!productData) {
-      // No product data, redirect to AllProducts
-      navigate('/inventario/todos');
+      navigate("/inventario/todos");
       return;
     }
 
     try {
-      const parsedProduct = JSON.parse(productData);
+      const parsedProduct = JSON.parse(productData) as Product;
       setProduct(parsedProduct);
-      
-      // Pre-fill form with product data
+
       setFormData({
         Name: parsedProduct.Name || "",
         Purchase_Sell: parsedProduct.Purchase_Sell?.toString() || "",
@@ -48,20 +70,23 @@ const EditProduct = () => {
         Brand: parsedProduct.Brand || "",
         Category: parsedProduct.Category || "",
         Purchase_Price: parsedProduct.Purchase_Price?.toString() || "",
-        Stock_Minimum: parsedProduct.Stock_Minimum?.toString() || ""
+        Stock_Minimum: parsedProduct.Stock_Minimum?.toString() || "",
       });
       setLoading(false);
     } catch (e) {
       console.error("Error parsing product data:", e);
       setLoading(false);
-      navigate('/inventario/todos');
+      navigate("/inventario/todos");
     }
   }, [navigate]);
 
-  const handleChange = (e) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    if (["Purchase_Sell", "Stock_Current", "Weight", "Purchase_Price", "Stock_Minimum"].includes(name)) {
-      // Only allow numbers and decimal point for numeric fields
+    if (
+      ["Purchase_Sell", "Stock_Current", "Weight", "Purchase_Price", "Stock_Minimum"].includes(
+        name
+      )
+    ) {
       setFormData({ ...formData, [name]: value.replace(/[^0-9.]/g, "") });
     } else {
       setFormData({ ...formData, [name]: value });
@@ -69,28 +94,54 @@ const EditProduct = () => {
   };
 
   const validateForm = () => {
-    // Required fields
-    const requiredFields = ["Name", "Purchase_Sell", "Stock_Current", "Weight", "Unit_Measure"];
+    const requiredFields: (keyof ProductForm)[] = [
+      "Name",
+      "Purchase_Sell",
+      "Stock_Current",
+      "Weight",
+      "Unit_Measure",
+    ];
     for (const field of requiredFields) {
       if (!formData[field]) {
-        setError(`El campo ${field === "Name" ? "Nombre" : 
-                          field === "Purchase_Sell" ? "Precio de venta" :
-                          field === "Stock_Current" ? "Stock actual" :
-                          field === "Weight" ? "Peso" :
-                          "Unidad de medida"} es obligatorio.`);
+        setError(
+          `El campo ${
+            field === "Name"
+              ? "Nombre"
+              : field === "Purchase_Sell"
+              ? "Precio de venta"
+              : field === "Stock_Current"
+              ? "Stock actual"
+              : field === "Weight"
+              ? "Peso"
+              : "Unidad de medida"
+          } es obligatorio.`
+        );
         return false;
       }
     }
 
-    // Validate numeric fields are positive
-    const numericFields = ["Purchase_Sell", "Stock_Current", "Weight", "Purchase_Price", "Stock_Minimum"];
+    const numericFields: (keyof ProductForm)[] = [
+      "Purchase_Sell",
+      "Stock_Current",
+      "Weight",
+      "Purchase_Price",
+      "Stock_Minimum",
+    ];
     for (const field of numericFields) {
       if (formData[field] && Number(formData[field]) < 0) {
-        setError(`${field === "Purchase_Sell" ? "Precio de venta" :
-                   field === "Stock_Current" ? "Stock actual" :
-                   field === "Weight" ? "Peso" :
-                   field === "Purchase_Price" ? "Precio de compra" :
-                   "Stock mínimo"} no puede ser negativo.`);
+        setError(
+          `${
+            field === "Purchase_Sell"
+              ? "Precio de venta"
+              : field === "Stock_Current"
+              ? "Stock actual"
+              : field === "Weight"
+              ? "Peso"
+              : field === "Purchase_Price"
+              ? "Precio de compra"
+              : "Stock mínimo"
+          } no puede ser negativo.`
+        );
         return false;
       }
     }
@@ -98,7 +149,7 @@ const EditProduct = () => {
     return true;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     setSuccess("");
@@ -119,26 +170,27 @@ const EditProduct = () => {
       Brand: formData.Brand || null,
       Category: formData.Category || null,
       Purchase_Price: formData.Purchase_Price ? Number(formData.Purchase_Price) : null,
-      Stock_Minimum: formData.Stock_Minimum ? Number(formData.Stock_Minimum) : null
+      Stock_Minimum: formData.Stock_Minimum ? Number(formData.Stock_Minimum) : null,
     };
 
     try {
       await updateDoc(doc(db, "Product", product.id), dataToUpdate);
       setSuccess("¡Producto actualizado correctamente!");
-      
-      // Clear localStorage and redirect after 2 seconds
+
       setTimeout(() => {
-        localStorage.removeItem('editProductData');
-        navigate('/inventario/todos');
+        localStorage.removeItem("editProductData");
+        navigate("/inventario/todos");
       }, 2000);
-    } catch (e) {
-      setError("Error al actualizar producto: " + e.message);
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Error desconocido al actualizar producto";
+      setError("Error al actualizar producto: " + message);
     }
   };
 
   const handleCancel = () => {
-    localStorage.removeItem('editProductData');
-    navigate('/inventario/todos');
+    localStorage.removeItem("editProductData");
+    navigate("/inventario/todos");
   };
 
   if (loading) {
@@ -253,8 +305,10 @@ const EditProduct = () => {
                 required
                 className="inventory-select"
               >
-                {unitOptions.map(unit => (
-                  <option key={unit} value={unit}>{unit}</option>
+                {unitOptions.map((unit) => (
+                  <option key={unit} value={unit}>
+                    {unit}
+                  </option>
                 ))}
               </select>
             </div>

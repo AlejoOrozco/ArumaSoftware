@@ -1,5 +1,3 @@
-// src/pages/Home.jsx
-import React from "react";
 import PageLayout from "../../components/common/PageLayout";
 import "./Home.css";
 
@@ -17,3 +15,4 @@ const Home = () => (
 );
 
 export default Home;
+
