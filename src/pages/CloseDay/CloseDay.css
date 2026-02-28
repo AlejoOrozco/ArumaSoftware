@@ -300,28 +300,98 @@
 
 /* Print Styles */
 @media print {
+  /* Force visible content and colors (avoid white print) */
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
   .close-day-container {
     padding: 0;
+    background: #fff !important;
+    color: #000 !important;
   }
-  
+
+  .close-day-title,
+  .close-day-description {
+    color: #333 !important;
+  }
+
   .date-selector,
   .print-section {
-    display: none;
+    display: none !important;
   }
-  
+
   .summary-cards {
     grid-template-columns: repeat(3, 1fr);
     gap: 16px;
   }
-  
+
   .summary-card {
     box-shadow: none;
-    border: 1px solid #ccc;
+    border: 1px solid #333 !important;
+    background: #fff !important;
+    color: #000 !important;
   }
-  
+
+  .summary-card h3,
+  .summary-card.total .summary-amount {
+    color: #333 !important;
+  }
+
+  .summary-card.cash .summary-amount {
+    color: #28a745 !important;
+  }
+
+  .summary-card.transfer .summary-amount {
+    color: #007bff !important;
+  }
+
+  .summary-detail {
+    color: #555 !important;
+  }
+
+  .invoices-section {
+    background: #fff !important;
+    border: 1px solid #ccc !important;
+  }
+
+  .invoices-section h2 {
+    color: #333 !important;
+  }
+
   .invoice-item {
     break-inside: avoid;
     margin-bottom: 16px;
+    background: #fff !important;
+    border: 1px solid #333 !important;
+    color: #000 !important;
+  }
+
+  .invoice-id,
+  .invoice-total {
+    color: #333 !important;
+  }
+
+  .invoice-time,
+  .invoice-comment {
+    color: #555 !important;
+  }
+
+  .payment-method.cash {
+    background: #d4edda !important;
+    color: #155724 !important;
+  }
+
+  .payment-method.transfer {
+    background: #d1ecf1 !important;
+    color: #0c5460 !important;
+  }
+
+  .no-invoices {
+    color: #555 !important;
   }
 } 
 

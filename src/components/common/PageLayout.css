@@ -117,9 +117,27 @@
     padding: 12px 20px;
     font-size: 1rem;
   }
-} 
-@media (max-width: 380px) {
-  .layout-main-card {
-    min-height: calc(100vh - 163px);
+}
+
+/* Print Styles */
+@media print {
+  /* Hide chrome, show only page content */
+  .page-layout .sidebar-overlay,
+  .page-layout .sidebar,
+  .layout-navbar,
+  .hamburger-menu {
+    display: none !important;
+  }
+
+  .page-layout,
+  .main-content-wrapper {
+    display: block !important;
+    margin: 0 !important;
+    width: 100% !important;
+    background: #fff !important;
+  }
+
+  .layout-content {
+    padding: 0 !important;
   }
 }
