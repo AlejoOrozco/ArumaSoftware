@@ -16,6 +16,7 @@ type InvoiceRecord = {
 };
 
 type InvoiceProductLite = {
+  id?: string;
   Name?: string;
   name?: string;
   quantity?: number;
@@ -85,19 +86,58 @@ const CloseDay = () => {
       const startDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
       const endDate = new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999));
 
-      const q = query(
-        collection(db, "Invoice"),
-        where("status", "==", "completed"),
-        orderBy("completionDate"),
-        where("completionDate", ">=", startDate),
-        where("completionDate", "<=", endDate)
-      );
+      const [productsSnapshot, invoicesSnapshot] = await Promise.all([
+        getDocs(collection(db, "Product")),
+        getDocs(
+          query(
+            collection(db, "Invoice"),
+            where("status", "==", "completed"),
+            orderBy("completionDate"),
+            where("completionDate", ">=", startDate),
+            where("completionDate", "<=", endDate)
+          )
+        ),
+      ]);
 
-      const snapshot = await getDocs(q);
-      const invoicesData: InvoiceRecord[] = snapshot.docs.map((docSnap) => ({
-        id: docSnap.id,
-        ...(docSnap.data() as Omit<InvoiceRecord, "id">),
-      }));
+      const allProductsMap = new Map<string, { Name?: string; Purchase_Sell?: number }>();
+      productsSnapshot.docs.forEach((docSnap) => {
+        const data = docSnap.data();
+        allProductsMap.set(docSnap.id, {
+          Name: data.Name ?? data.name,
+          Purchase_Sell: data.Purchase_Sell ?? data.PurchaseSell ?? data.price,
+        });
+      });
+
+      const hydrateInvoiceProducts = (items: InvoiceProductLite[]): InvoiceProductLite[] =>
+        (items || []).map((p): InvoiceProductLite => {
+          const fromDb = p.id ? allProductsMap.get(p.id) : undefined;
+          const hydrated = {
+            ...p,
+            Name: p.Name ?? p.name ?? fromDb?.Name,
+            name: p.name ?? p.Name ?? fromDb?.Name,
+            Purchase_Sell:
+              p.Purchase_Sell ??
+              p.PurchaseSell ??
+              p.price ??
+              p.overridePrice ??
+              fromDb?.Purchase_Sell,
+            quantity: p.quantity ?? p.Quantity,
+            Quantity: p.Quantity ?? p.quantity,
+          };
+          return hydrated as InvoiceProductLite;
+        });
+
+      const invoicesData: InvoiceRecord[] = invoicesSnapshot.docs.map((docSnap) => {
+        const data = docSnap.data() as Omit<InvoiceRecord, "id">;
+        const rawProducts = data.Products ?? data.products ?? [];
+        const hydrated = hydrateInvoiceProducts(rawProducts as InvoiceProductLite[]);
+        return {
+          id: docSnap.id,
+          ...data,
+          Products: hydrated,
+          products: hydrated,
+        };
+      });
 
       setInvoices(invoicesData);
       calculateSummary(invoicesData);
