@@ -1,5 +1,4 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { useReactToPrint } from "react-to-print";
 import { db } from "../../config/firebaseConfig";
 import {
   collection,
@@ -14,6 +13,7 @@ import {
 import PageLayout from "../../components/common/PageLayout";
 import CustomModal from "../../components/Modals/CustomModal";
 import Receipt from "../../components/Receipt/Receipt";
+import { usePrint, RECEIPT_PRINT_PAGE_STYLE } from "../../hooks/usePrint";
 import "./Invoice.css";
 
 // NOTE: This file is a direct TypeScript port of the existing JSX logic.
@@ -92,50 +92,20 @@ const Invoice = () => {
     setBoards(updatedBoards);
   };
 
-  const handlePrint = useReactToPrint({
+  const handlePrint = usePrint({
     contentRef: receiptRef,
+    pageStyle: RECEIPT_PRINT_PAGE_STYLE,
     onAfterPrint: () => setInvoiceToPrint(null),
-    pageStyle: `
-      @page { margin: 5mm; size: 80mm auto; }
-      body, .receipt-container {
-        display: block !important;
-        visibility: visible !important;
-        color: #000 !important;
-        background: #fff !important;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-      }
-      .receipt-container {
-        font-family: 'Courier New', Courier, monospace;
-        width: 280px;
-        padding: 10px;
-        margin: 0;
-      }
-      .receipt-header { text-align: center; border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 10px; }
-      .receipt-shop-name { font-size: 1.2rem; font-weight: bold; margin: 0; color: #000; }
-      .receipt-header p { margin: 0; font-size: 0.8rem; color: #000; }
-      .receipt-info { margin-bottom: 10px; font-size: 0.8rem; color: #000; }
-      .receipt-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; color: #000; }
-      .receipt-table th, .receipt-table td { padding: 4px 2px; text-align: left; color: #000; }
-      .receipt-table th:nth-child(2), .receipt-table td:nth-child(2) { text-align: center; }
-      .receipt-table th:nth-child(3), .receipt-table td:nth-child(3),
-      .receipt-table th:nth-child(4), .receipt-table td:nth-child(4) { text-align: right; }
-      .receipt-table thead { border-bottom: 1px dashed #000; }
-      .receipt-total { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #000; text-align: right; font-size: 1.1rem; color: #000; }
-      .receipt-payment { margin-top: 8px; padding-top: 8px; border-top: 1px dotted #000; text-align: center; font-size: 0.9rem; color: #000; }
-      .receipt-payment p { margin: 0; }
-      .receipt-footer { margin-top: 10px; text-align: center; font-size: 0.8rem; color: #000; }
-    `,
   });
 
   useEffect(() => {
-    if (invoiceToPrint && receiptRef.current) {
-      console.log("[Invoice] About to print. invoiceToPrint:", invoiceToPrint);
-      console.log("[Invoice] receiptRef.current:", receiptRef.current);
-      setTimeout(() => {
-        handlePrint();
-      }, 100);
-    }
+    if (!invoiceToPrint) return;
+    const id = setTimeout(() => {
+      if (receiptRef.current) {
+        handlePrint.print();
+      }
+    }, 150);
+    return () => clearTimeout(id);
   }, [invoiceToPrint, handlePrint]);
 
   const extractCategories = (products: any[]) => {
@@ -281,8 +251,13 @@ const Invoice = () => {
             Quantity: p.quantity,
           };
         }
-        const data: AnyRecord = { id: p.id, Quantity: p.quantity };
-        if (p.hasOverridePrice) {
+        const data: AnyRecord = {
+          id: p.id,
+          Name: p.Name,
+          Quantity: p.quantity,
+          Purchase_Sell: p.Purchase_Sell ?? p.overridePrice,
+        };
+        if (p.hasOverridePrice && p.Purchase_Sell != null) {
           data.overridePrice = p.Purchase_Sell;
         }
         return data;

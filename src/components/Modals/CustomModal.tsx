@@ -1,6 +1,6 @@
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import "./CustomModal.css";
 
 const MySwal = withReactContent(Swal);
@@ -30,6 +30,13 @@ const CustomModal = ({
   onPrintRequest,
   invoiceDataForPrint,
 }: CustomModalProps) => {
+  const onHideRef = useRef(onHide);
+  const onConfirmRef = useRef(onConfirm);
+  const onPrintRequestRef = useRef(onPrintRequest);
+  onHideRef.current = onHide;
+  onConfirmRef.current = onConfirm;
+  onPrintRequestRef.current = onPrintRequest;
+
   useEffect(() => {
     if (!show) {
       Swal.close();
@@ -46,6 +53,8 @@ const CustomModal = ({
         actions: "custom-swal-actions",
       },
       buttonsStyling: false,
+      allowOutsideClick: false,
+      allowEscapeKey: false,
     } as const;
 
     if (isLoading) {
@@ -54,8 +63,6 @@ const CustomModal = ({
         title: title || "Procesando",
         text: message || "Por favor, espera...",
         icon: "info",
-        allowOutsideClick: false,
-        allowEscapeKey: false,
         showConfirmButton: false,
         didOpen: () => {
           Swal.showLoading();
@@ -72,13 +79,11 @@ const CustomModal = ({
         cancelButtonText: "Imprimir Recibo",
       }).then((result) => {
         if (result.isConfirmed) {
-          if (onConfirm) onConfirm();
-          onHide();
+          onConfirmRef.current?.();
+          onHideRef.current();
         } else if (result.dismiss === Swal.DismissReason.cancel) {
-          if (onPrintRequest) onPrintRequest(invoiceDataForPrint);
-        } else {
-          if (onConfirm) onConfirm();
-          onHide();
+          onPrintRequestRef.current?.(invoiceDataForPrint);
+          onHideRef.current();
         }
       });
     }
@@ -87,11 +92,8 @@ const CustomModal = ({
     isLoading,
     message,
     variant,
-    onHide,
-    onConfirm,
     title,
     showPrintButton,
-    onPrintRequest,
     invoiceDataForPrint,
   ]);
 
