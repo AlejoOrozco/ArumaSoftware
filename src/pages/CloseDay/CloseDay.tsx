@@ -65,7 +65,6 @@ const CloseDay = () => {
     transferCount: 0,
   });
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceRecord | null>(null);
-  const [sendingTelegram, setSendingTelegram] = useState(false);
 
   useEffect(() => {
     fetchInvoices();
@@ -410,7 +409,7 @@ const CloseDay = () => {
             <div className="print-section">
               <button
                 className="print-btn"
-                onClick={() => {
+                onClick={async () => {
                   const dateLabel = formatDateLabel(selectedDate ?? "");
                   const html = getDaySummaryPrintHtml(
                     summary,
@@ -426,35 +425,42 @@ const CloseDay = () => {
                           | null
                       )
                   );
+                  const telegramPayload = {
+                    dateLabel,
+                    totalIncome: summary.totalIncome,
+                    totalCash: summary.totalCash,
+                    totalTransfer: summary.totalTransfer,
+                    invoiceCount: summary.invoiceCount,
+                    invoices: invoices.map((inv) => {
+                      const productList = inv.Products ?? inv.products ?? [];
+                      const getProductName = (p: InvoiceProductLite) => p.Name ?? p.name ?? "Producto";
+                      const getProductQty = (p: InvoiceProductLite) => p.quantity ?? p.Quantity ?? 1;
+                      const productLines = productList.map((p: InvoiceProductLite) => {
+                        const price = getProductPrice(p);
+                        const qty = getProductQty(p);
+                        const name = getProductName(p);
+                        if (price !== undefined) {
+                          return `${name} × ${qty} — $${(price * qty).toFixed(2)}`;
+                        }
+                        return `${name} × ${qty}`;
+                      });
+                      const item: import("../../services/telegramNotification").DaySummaryInvoiceForTelegram = {
+                        id: inv.id,
+                        total: inv.Total ?? 0,
+                        time: formatTime(getInvoiceDate(inv.completionDate ?? null)),
+                        productLines,
+                      };
+                      if (inv.paymentMethod != null) item.paymentMethod = inv.paymentMethod;
+                      return item;
+                    }),
+                  };
+                  sendDaySummaryNotification(telegramPayload).catch((err) =>
+                    console.warn("Telegram day summary failed:", err)
+                  );
                   printUtf8DocumentAsImage(html, "Resumen del Día");
                 }}
               >
                 Imprimir Resumen del Día
-              </button>
-              <button
-                className="print-btn"
-                type="button"
-                disabled={sendingTelegram}
-                onClick={async () => {
-                  setSendingTelegram(true);
-                  try {
-                    await sendDaySummaryNotification({
-                      dateLabel: formatDateLabel(selectedDate ?? ""),
-                      totalIncome: summary.totalIncome,
-                      totalCash: summary.totalCash,
-                      totalTransfer: summary.totalTransfer,
-                      invoiceCount: summary.invoiceCount,
-                    });
-                    alert("Resumen del día enviado por Telegram.");
-                  } catch (err) {
-                    console.warn("Telegram day summary failed:", err);
-                    alert("No se pudo enviar el resumen por Telegram. Revisa la consola o la configuración.");
-                  } finally {
-                    setSendingTelegram(false);
-                  }
-                }}
-              >
-                {sendingTelegram ? "Enviando…" : "Enviar resumen por Telegram"}
               </button>
             </div>
           </>

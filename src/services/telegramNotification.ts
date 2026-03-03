@@ -29,12 +29,44 @@ export async function sendPurchaseNotification(params: {
   total: number;
   date?: string;
   paymentMethod?: string;
+  cashAmountPaid?: number;
+  cashChange?: number;
 }): Promise<void> {
-  const method = params.paymentMethod === "transfer" ? "Transferencia" : "Efectivo";
   const dateStr = params.date ?? new Date().toISOString().slice(0, 10);
-  const text = `Nueva compra por $${params.total.toFixed(2)}.\nMesa: ${params.boardName ?? "N/A"}\nFecha: ${dateStr}\nMétodo: ${method}`;
+  let methodLine: string;
+  if (params.paymentMethod === "transfer") {
+    methodLine = "Método: Transferencia";
+  } else {
+    const paid = params.cashAmountPaid != null ? `Pagado: $${params.cashAmountPaid.toFixed(2)}` : "";
+    const change = params.cashChange != null ? `Cambio: $${params.cashChange.toFixed(2)}` : "";
+    methodLine = ["Método: Efectivo", paid, change].filter(Boolean).join(" · ");
+  }
+  const text =
+    `🛒 Nueva compra — $${params.total.toFixed(2)}\n` +
+    `Mesa: ${params.boardName ?? "N/A"}\n` +
+    `Fecha: ${dateStr}\n` +
+    methodLine;
   await sendTelegramText(text);
 }
+
+export type LowStockItem = { name: string; current: number; minimum: number };
+
+export async function sendLowStockNotification(products: LowStockItem[]): Promise<void> {
+  if (products.length === 0) return;
+  const lines = products.map(
+    (p) => `• ${p.name}: ${p.current} en stock (mínimo ${p.minimum})`
+  );
+  const text = `Stock bajo\n${lines.join("\n")}`;
+  await sendTelegramText(text);
+}
+
+export type DaySummaryInvoiceForTelegram = {
+  id: string;
+  total: number;
+  paymentMethod?: string;
+  time?: string;
+  productLines?: string[];
+};
 
 export async function sendDaySummaryNotification(params: {
   dateLabel: string;
@@ -42,13 +74,29 @@ export async function sendDaySummaryNotification(params: {
   totalCash: number;
   totalTransfer: number;
   invoiceCount: number;
+  invoices: DaySummaryInvoiceForTelegram[];
 }): Promise<void> {
-  const { dateLabel, totalIncome, totalCash, totalTransfer, invoiceCount } = params;
-  const text =
+  const { dateLabel, totalIncome, totalCash, totalTransfer, invoiceCount, invoices } = params;
+  let text =
     `Día cerrado — ${dateLabel}\n` +
     `Total vendido: $${totalIncome.toFixed(2)}\n` +
-    `Efectivo: $${totalCash.toFixed(2)}\n` +
-    `Transferencias: $${totalTransfer.toFixed(2)}\n` +
-    `Facturas: ${invoiceCount}`;
+    `Efectivo: $${totalCash.toFixed(2)} · Transferencias: $${totalTransfer.toFixed(2)}\n` +
+    `Facturas: ${invoiceCount}\n`;
+
+  if (invoices.length > 0) {
+    text += "\n— Detalle por factura —\n";
+    invoices.forEach((inv) => {
+      const method = (inv.paymentMethod || "cash") === "cash" ? "Efectivo" : "Transferencia";
+      text += `\n#${inv.id.slice(0, 8)} · $${inv.total.toFixed(2)} · ${method}`;
+      if (inv.time) text += ` · ${inv.time}`;
+      text += "\n";
+      if (inv.productLines?.length) {
+        inv.productLines.forEach((line) => {
+          text += `  ${line}\n`;
+        });
+      }
+    });
+  }
+
   await sendTelegramText(text);
 }

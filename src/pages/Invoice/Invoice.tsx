@@ -14,7 +14,7 @@ import PageLayout from "../../components/common/PageLayout";
 import CustomModal from "../../components/Modals/CustomModal";
 import Receipt from "../../components/Receipt/Receipt";
 import { printUtf8DocumentAsImage, getReceiptPrintHtml, type ReceiptInvoiceForPrint } from "../../utils/printUtf8";
-import { sendPurchaseNotification } from "../../services/telegramNotification";
+import { sendPurchaseNotification, sendLowStockNotification } from "../../services/telegramNotification";
 import "./Invoice.css";
 
 // NOTE: This file is a direct TypeScript port of the existing JSX logic.
@@ -653,6 +653,7 @@ Esta acción no se puede deshacer.`,
               const data = productDoc.data() as any;
               const currentStock = data.Stock_Current || 0;
               const newStock = Math.max(0, currentStock - product.quantity);
+              const minimum = data.Stock_Minimum ?? 2;
 
               await updateDoc(productRef, {
                 Stock_Current: newStock,
@@ -661,6 +662,14 @@ Esta acción no se puede deshacer.`,
               console.log(
                 `Stock updated for ${product.Name}: ${currentStock} -> ${newStock} (sold: ${product.quantity})`
               );
+
+              if (newStock < minimum) {
+                return {
+                  name: product.Name ?? product.name ?? "Producto",
+                  current: newStock,
+                  minimum,
+                };
+              }
             } else {
               console.warn(`Product ${product.id} not found in database`);
             }
@@ -670,9 +679,18 @@ Esta acción no se puede deshacer.`,
               error
             );
           }
+          return null;
         });
 
-      await Promise.all(stockUpdatePromises);
+      const stockResults = await Promise.all(stockUpdatePromises);
+      const lowStockProducts = stockResults.filter(
+        (r): r is { name: string; current: number; minimum: number } => r != null
+      );
+      if (lowStockProducts.length > 0) {
+        sendLowStockNotification(lowStockProducts).catch((err) =>
+          console.warn("Telegram low-stock notification failed:", err)
+        );
+      }
 
       const productsWithStockUpdate = boardToSave.products.filter(
         (product: any) => !product.isCustom && product.id
@@ -700,6 +718,10 @@ Esta acción no se puede deshacer.`,
         total: finalTotal,
         date: new Date().toISOString().slice(0, 10),
         paymentMethod,
+        ...(paymentMethod === "cash" && {
+          cashAmountPaid: Number(cashAmountPaid),
+          cashChange: Number(cashAmountPaid) - finalTotal,
+        }),
       }).catch((err) => console.warn("Telegram notification failed:", err));
 
       setModalConfig({
