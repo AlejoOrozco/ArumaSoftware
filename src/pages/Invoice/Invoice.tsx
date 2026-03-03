@@ -583,22 +583,22 @@ Esta acción no se puede deshacer.`,
           )
           .join(", ");
 
+        setModalConfig({ show: false });
+        alert(
+          `Aviso — Stock bajo: ${insufficientProducts}. La venta se registrará igual. Considera reponer stock.`
+        );
         setModalConfig({
           show: true,
-          isLoading: false,
-          variant: "error",
-          title: "Stock Insuficiente",
-          message: `No hay suficiente stock para: ${insufficientProducts}`,
-          onConfirm: null,
+          isLoading: true,
+          title: "Registrando Compra",
         });
-        return;
+      } else {
+        setModalConfig({
+          show: true,
+          isLoading: true,
+          title: "Registrando Compra",
+        });
       }
-
-      setModalConfig({
-        show: true,
-        isLoading: true,
-        title: "Registrando Compra",
-      });
 
       const subtotal = boardToSave.products.reduce(
         (sum: number, p: any) => sum + (p.Purchase_Sell || 0) * p.quantity,
