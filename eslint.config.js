@@ -7,7 +7,16 @@ import tseslint from "typescript-eslint";
 export default [
   { ignores: ["dist"] },
   {
-    files: ["**/*.{js,jsx,ts,tsx}"],
+    files: ["api/**/*.ts"],
+    languageOptions: {
+      ecmaVersion: "latest",
+      globals: globals.node,
+      parser: tseslint.parser,
+      parserOptions: { ecmaVersion: "latest", sourceType: "module" },
+    },
+  },
+  {
+    files: ["src/**/*.{js,jsx,ts,tsx}", "vite.config.ts", "eslint.config.js"],
     languageOptions: {
       ecmaVersion: "latest",
       globals: globals.browser,

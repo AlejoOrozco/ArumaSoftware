@@ -3,6 +3,7 @@ import { db } from "../../config/firebaseConfig";
 import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
 import PageLayout from "../../components/common/PageLayout";
 import { printUtf8DocumentAsImage, getDaySummaryPrintHtml } from "../../utils/printUtf8";
+import { sendDaySummaryNotification } from "../../services/telegramNotification";
 import "./CloseDay.css";
 
 type InvoiceRecord = {
@@ -64,6 +65,7 @@ const CloseDay = () => {
     transferCount: 0,
   });
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceRecord | null>(null);
+  const [sendingTelegram, setSendingTelegram] = useState(false);
 
   useEffect(() => {
     fetchInvoices();
@@ -428,6 +430,31 @@ const CloseDay = () => {
                 }}
               >
                 Imprimir Resumen del Día
+              </button>
+              <button
+                className="print-btn"
+                type="button"
+                disabled={sendingTelegram}
+                onClick={async () => {
+                  setSendingTelegram(true);
+                  try {
+                    await sendDaySummaryNotification({
+                      dateLabel: formatDateLabel(selectedDate ?? ""),
+                      totalIncome: summary.totalIncome,
+                      totalCash: summary.totalCash,
+                      totalTransfer: summary.totalTransfer,
+                      invoiceCount: summary.invoiceCount,
+                    });
+                    alert("Resumen del día enviado por Telegram.");
+                  } catch (err) {
+                    console.warn("Telegram day summary failed:", err);
+                    alert("No se pudo enviar el resumen por Telegram. Revisa la consola o la configuración.");
+                  } finally {
+                    setSendingTelegram(false);
+                  }
+                }}
+              >
+                {sendingTelegram ? "Enviando…" : "Enviar resumen por Telegram"}
               </button>
             </div>
           </>

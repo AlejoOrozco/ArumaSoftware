@@ -14,6 +14,7 @@ import PageLayout from "../../components/common/PageLayout";
 import CustomModal from "../../components/Modals/CustomModal";
 import Receipt from "../../components/Receipt/Receipt";
 import { printUtf8DocumentAsImage, getReceiptPrintHtml, type ReceiptInvoiceForPrint } from "../../utils/printUtf8";
+import { sendPurchaseNotification } from "../../services/telegramNotification";
 import "./Invoice.css";
 
 // NOTE: This file is a direct TypeScript port of the existing JSX logic.
@@ -693,6 +694,13 @@ Esta acción no se puede deshacer.`,
         productsWithStockUpdate > 0
           ? `La compra para ${boardToSave.name} se ha finalizado y el inventario ha sido actualizado (${productsWithStockUpdate} productos).`
           : `La compra para ${boardToSave.name} se ha finalizado.`;
+
+      sendPurchaseNotification({
+        boardName: boardToSave.name,
+        total: finalTotal,
+        date: new Date().toISOString().slice(0, 10),
+        paymentMethod,
+      }).catch((err) => console.warn("Telegram notification failed:", err));
 
       setModalConfig({
         show: true,
