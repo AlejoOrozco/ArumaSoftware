@@ -1,8 +1,8 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { db } from "../../config/firebaseConfig";
 import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
 import PageLayout from "../../components/common/PageLayout";
-import { usePrint, DAY_SUMMARY_PRINT_PAGE_STYLE } from "../../hooks/usePrint";
+import { printUtf8DocumentAsImage, getDaySummaryPrintHtml } from "../../utils/printUtf8";
 import "./CloseDay.css";
 
 type InvoiceRecord = {
@@ -64,12 +64,6 @@ const CloseDay = () => {
     transferCount: 0,
   });
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceRecord | null>(null);
-  const printRef = useRef<HTMLDivElement | null>(null);
-  const { print } = usePrint({
-    contentRef: printRef,
-    pageStyle: DAY_SUMMARY_PRINT_PAGE_STYLE,
-    documentTitle: "Resumen del Día",
-  });
 
   useEffect(() => {
     fetchInvoices();
@@ -411,108 +405,28 @@ const CloseDay = () => {
 
         {invoices.length > 0 && (
           <>
-            <div
-              aria-hidden="true"
-              style={{
-                position: "absolute",
-                left: "-9999px",
-                top: 0,
-                width: "210mm",
-              }}
-              ref={printRef}
-            >
-              <div className="day-summary-print">
-                <h1>Resumen del Día</h1>
-                <p className="day-summary-date">
-                  {formatDateLabel(selectedDate ?? "")}
-                </p>
-                <div className="day-summary-cards">
-                  <div className="day-summary-card">
-                    <h3>Ingresos Totales</h3>
-                    <div className="amount">${summary.totalIncome.toFixed(2)}</div>
-                    <div className="detail">{summary.invoiceCount} facturas</div>
-                  </div>
-                  <div className="day-summary-card">
-                    <h3>Efectivo</h3>
-                    <div className="amount">${summary.totalCash.toFixed(2)}</div>
-                    <div className="detail">{summary.cashCount} transacciones</div>
-                  </div>
-                  <div className="day-summary-card">
-                    <h3>Transferencias</h3>
-                    <div className="amount">${summary.totalTransfer.toFixed(2)}</div>
-                    <div className="detail">{summary.transferCount} transacciones</div>
-                  </div>
-                </div>
-                <div className="day-summary-invoices">
-                  <h2>Facturas del {formatDateLabel(selectedDate ?? "")}</h2>
-                  {invoices.map((invoice) => {
-                    const productList =
-                      invoice.Products || invoice.products || [];
-                    const getProductName = (p: InvoiceProductLite) =>
-                      p.Name || p.name || "Producto";
-                    const getProductQty = (p: InvoiceProductLite) =>
-                      p.quantity ?? p.Quantity ?? 1;
-                    return (
-                      <div
-                        key={invoice.id}
-                        className="day-summary-invoice-item"
-                      >
-                        <div className="row">
-                          <span className="id">
-                            Factura #{invoice.id.substring(0, 8)}
-                          </span>
-                          <span>
-                            {formatTime(
-                              getInvoiceDate(invoice.completionDate ?? null)
-                            )}
-                          </span>
-                        </div>
-                        <div className="row">
-                          <span className="total">
-                            ${invoice.Total?.toFixed(2)}
-                          </span>
-                          <span>
-                            {(invoice.paymentMethod || "cash") === "cash"
-                              ? "Efectivo"
-                              : "Transferencia"}
-                          </span>
-                        </div>
-                        {invoice.Comment && (
-                          <div className="row">
-                            <span className="detail">Comentario: {invoice.Comment}</span>
-                          </div>
-                        )}
-                        {productList.length > 0 && (
-                          <div className="day-summary-products">
-                            <strong>Productos:</strong>
-                            <ul>
-                              {productList.map((p, idx) => {
-                                const price = getProductPrice(p);
-                                const qty = getProductQty(p);
-                                const lineTotal =
-                                  price !== undefined ? price * qty : null;
-                                return (
-                                  <li key={idx}>
-                                    {getProductName(p)} — Cant: {qty}
-                                    {price !== undefined ? (
-                                      <> × ${price.toFixed(2)} = ${lineTotal!.toFixed(2)}</>
-                                    ) : (
-                                      <> — Precio: N/A</>
-                                    )}
-                                  </li>
-                                );
-                              })}
-                            </ul>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
             <div className="print-section">
-              <button className="print-btn" onClick={() => print()}>
+              <button
+                className="print-btn"
+                onClick={() => {
+                  const dateLabel = formatDateLabel(selectedDate ?? "");
+                  const html = getDaySummaryPrintHtml(
+                    summary,
+                    invoices,
+                    dateLabel,
+                    formatTime,
+                    (d) =>
+                      getInvoiceDate(
+                        d as
+                          | { toDate?: () => Date }
+                          | Date
+                          | string
+                          | null
+                      )
+                  );
+                  printUtf8DocumentAsImage(html, "Resumen del Día");
+                }}
+              >
                 Imprimir Resumen del Día
               </button>
             </div>

@@ -13,7 +13,7 @@ import {
 import PageLayout from "../../components/common/PageLayout";
 import CustomModal from "../../components/Modals/CustomModal";
 import Receipt from "../../components/Receipt/Receipt";
-import { usePrint, RECEIPT_PRINT_PAGE_STYLE } from "../../hooks/usePrint";
+import { printUtf8DocumentAsImage, getReceiptPrintHtml, type ReceiptInvoiceForPrint } from "../../utils/printUtf8";
 import "./Invoice.css";
 
 // NOTE: This file is a direct TypeScript port of the existing JSX logic.
@@ -92,21 +92,19 @@ const Invoice = () => {
     setBoards(updatedBoards);
   };
 
-  const handlePrint = usePrint({
-    contentRef: receiptRef,
-    pageStyle: RECEIPT_PRINT_PAGE_STYLE,
-    onAfterPrint: () => setInvoiceToPrint(null),
-  });
-
   useEffect(() => {
     if (!invoiceToPrint) return;
-    const id = setTimeout(() => {
-      if (receiptRef.current) {
-        handlePrint.print();
-      }
-    }, 150);
-    return () => clearTimeout(id);
-  }, [invoiceToPrint, handlePrint]);
+    const data = invoiceToPrint as { Products?: Array<{ Name?: string; name?: string; quantity?: number; Quantity?: number; Purchase_Sell?: number; PurchaseSell?: number; price?: number }>; Total: number; Date: string; Comment?: string; paymentMethod?: string };
+    const payload: ReceiptInvoiceForPrint = {
+      Products: data.Products ?? [],
+      Total: data.Total ?? 0,
+      Date: data.Date ?? new Date().toISOString(),
+    };
+    if (data.Comment != null) payload.Comment = data.Comment;
+    if (data.paymentMethod != null) payload.paymentMethod = data.paymentMethod;
+    const html = getReceiptPrintHtml(payload);
+    printUtf8DocumentAsImage(html, "Recibo", () => setInvoiceToPrint(null));
+  }, [invoiceToPrint]);
 
   const extractCategories = (products: any[]) => {
     const categorySet = new Set<string>();
