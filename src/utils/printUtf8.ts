@@ -17,6 +17,9 @@ function truncateToColumns(text: string, maxCols: number): string {
   return s.slice(0, maxCols - 1) + "…";
 }
 
+/** Print width for thermal: paper 80mm, print area 72mm (e.g. DigitalPOS DIG E200i). */
+const PRINT_WIDTH_MM = 72;
+
 const UTF8_HTML_PREFIX = `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -24,7 +27,7 @@ const UTF8_HTML_PREFIX = `<!DOCTYPE html>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <title>__TITLE__</title>
   <style type="text/css">
-    body { margin: 0; padding: 0; font-family: 'Courier New', Courier, monospace; color: #000; background: #fff; }
+    body { margin: 0; padding: 0; font-family: 'Courier New', Courier, monospace; color: #000; background: #fff; font-weight: 700; }
     * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   </style>
 </head>
@@ -64,7 +67,7 @@ export function printUtf8DocumentAsImage(
     position: "fixed",
     left: "-9999px",
     top: "0",
-    width: "320px",
+    width: "272px",
     height: "800px",
     border: "none",
   });
@@ -92,7 +95,7 @@ export function printUtf8DocumentAsImage(
 
     const doCapture = () => {
       html2canvas(body, {
-        scale: 2,
+        scale: 2.5,
         useCORS: true,
         logging: false,
         backgroundColor: "#ffffff",
@@ -106,8 +109,14 @@ export function printUtf8DocumentAsImage(
             onAfterPrint?.();
             return;
           }
+          const pageSize = PRINT_WIDTH_MM;
           printWindow.document.write(
-            `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${escapeHtml(title)}</title></head><body style="margin:0;padding:0;"><img src="${dataUrl}" alt="" style="display:block;width:100%;height:auto;" /></body></html>`
+            `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${escapeHtml(title)}</title>
+<style>
+  @page { size: ${pageSize}mm auto; margin: 0; }
+  body { margin: 0; padding: 0; background: #fff; }
+  img { display: block; width: ${pageSize}mm; max-width: ${pageSize}mm; height: auto; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+</style></head><body><img src="${dataUrl}" alt="" /></body></html>`
           );
           printWindow.document.close();
           const afterPrint = () => {
@@ -206,30 +215,32 @@ export function getReceiptPrintHtml(invoice: ReceiptInvoiceForPrint): string {
     return `<tr><td>${escapeHtml(String(name))}</td><td>${qty}</td><td>$${Number(price).toFixed(2)}</td><td>$${lineTotal.toFixed(2)}</td></tr>`;
   }).join("");
 
+  /** 72mm print width: ~272px at 96dpi. Bolder text and borders so thermal output is readable. */
+  const wrapW = 272;
   let html = `
-<div style="width:280px;padding:8px;margin:0;">
-  <div style="text-align:center;border-bottom:1px dashed #000;padding-bottom:8px;margin-bottom:8px;">
-    <strong style="font-size:14px;">Aruma Café</strong>
-    <p style="margin:4px 0 0 0;font-size:11px;">Gracias por tu compra</p>
+<div style="width:${wrapW}px;padding:10px;margin:0;font-weight:700;color:#000;">
+  <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:10px;">
+    <strong style="font-size:16px;">Aruma Café</strong>
+    <p style="margin:6px 0 0 0;font-size:13px;">Gracias por tu compra</p>
   </div>
-  <div style="margin-bottom:8px;font-size:11px;">Fecha: ${escapeHtml(dateStr)}</div>
-  <table style="width:100%;border-collapse:collapse;font-size:11px;">
+  <div style="margin-bottom:10px;font-size:13px;">Fecha: ${escapeHtml(dateStr)}</div>
+  <table style="width:100%;border-collapse:collapse;font-size:13px;font-weight:700;">
     <thead>
-      <tr><th style="text-align:left;">Producto</th><th style="text-align:center;">Cant.</th><th style="text-align:right;">Precio</th><th style="text-align:right;">Total</th></tr>
+      <tr><th style="text-align:left;border-bottom:2px solid #000;">Producto</th><th style="text-align:center;border-bottom:2px solid #000;">Cant.</th><th style="text-align:right;border-bottom:2px solid #000;">Precio</th><th style="text-align:right;border-bottom:2px solid #000;">Total</th></tr>
     </thead>
     <tbody>${rows}</tbody>
   </table>
-  <div style="margin-top:8px;padding-top:8px;border-top:1px dashed #000;text-align:right;font-size:12px;"><strong>TOTAL: $${Total.toFixed(2)}</strong></div>`;
+  <div style="margin-top:10px;padding-top:10px;border-top:2px dashed #000;text-align:right;font-size:14px;"><strong>TOTAL: $${Total.toFixed(2)}</strong></div>`;
 
   if (paymentMethod) {
     const method = paymentMethod === "cash" ? "Efectivo" : "Transferencia";
-    html += `<div style="margin-top:6px;padding-top:6px;border-top:1px dotted #000;text-align:center;font-size:11px;"><strong>Método de Pago:</strong> ${escapeHtml(method)}</div>`;
+    html += `<div style="margin-top:8px;padding-top:8px;border-top:2px dotted #000;text-align:center;font-size:13px;"><strong>Método de Pago:</strong> ${escapeHtml(method)}</div>`;
   }
   if (Comment) {
     const commentSafe = truncateToColumns(Comment, THERMAL_COLUMNS_80MM - 2);
-    html += `<div style="margin-top:6px;text-align:center;font-size:11px;"><strong>Comentario:</strong> ${escapeHtml(commentSafe)}</div>`;
+    html += `<div style="margin-top:8px;text-align:center;font-size:13px;"><strong>Comentario:</strong> ${escapeHtml(commentSafe)}</div>`;
   }
-  html += `<div style="margin-top:8px;text-align:center;font-size:11px;">¡Vuelve pronto!</div></div>`;
+  html += `<div style="margin-top:10px;text-align:center;font-size:13px;">¡Vuelve pronto!</div></div>`;
   return html;
 }
 
@@ -276,36 +287,37 @@ export function getDaySummaryPrintHtml(
   getInvoiceDate: (d: unknown) => Date | null
 ): string {
   const dateEsc = escapeHtml(dateLabel);
+  /** 72mm print width; bolder and slightly larger for thermal readability. */
   let html = `
-<div style="padding:0 4px;max-width:80mm;font-size:9px;">
-  <h1 style="font-size:11px;margin:0 0 2px 0;text-align:center;">Resumen del Día</h1>
-  <p style="font-size:9px;margin-bottom:4px;text-align:center;">${dateEsc}</p>
-  <div style="margin-bottom:6px;">
-    <div style="border:1px solid #000;padding:3px 4px;text-align:center;margin-bottom:3px;">
-      <strong>Ingresos Totales</strong><br><span style="font-size:11px;">$${summary.totalIncome.toFixed(2)}</span><br>${summary.invoiceCount} facturas
+<div style="padding:6px;max-width:272px;font-size:11px;font-weight:700;color:#000;">
+  <h1 style="font-size:13px;margin:0 0 4px 0;text-align:center;">Resumen del Día</h1>
+  <p style="font-size:11px;margin-bottom:6px;text-align:center;">${dateEsc}</p>
+  <div style="margin-bottom:8px;">
+    <div style="border:2px solid #000;padding:4px 6px;text-align:center;margin-bottom:4px;">
+      <strong>Ingresos Totales</strong><br><span style="font-size:13px;">$${summary.totalIncome.toFixed(2)}</span><br>${summary.invoiceCount} facturas
     </div>
-    <div style="border:1px solid #000;padding:3px 4px;text-align:center;margin-bottom:3px;">
-      <strong>Efectivo</strong><br><span style="font-size:11px;">$${summary.totalCash.toFixed(2)}</span><br>${summary.cashCount} transacciones
+    <div style="border:2px solid #000;padding:4px 6px;text-align:center;margin-bottom:4px;">
+      <strong>Efectivo</strong><br><span style="font-size:13px;">$${summary.totalCash.toFixed(2)}</span><br>${summary.cashCount} transacciones
     </div>
-    <div style="border:1px solid #000;padding:3px 4px;text-align:center;margin-bottom:3px;">
-      <strong>Transferencias</strong><br><span style="font-size:11px;">$${summary.totalTransfer.toFixed(2)}</span><br>${summary.transferCount} transacciones
+    <div style="border:2px solid #000;padding:4px 6px;text-align:center;margin-bottom:4px;">
+      <strong>Transferencias</strong><br><span style="font-size:13px;">$${summary.totalTransfer.toFixed(2)}</span><br>${summary.transferCount} transacciones
     </div>
   </div>
-  <h2 style="font-size:10px;margin:4px 0 3px 0;">Facturas del ${dateEsc}</h2>`;
+  <h2 style="font-size:12px;margin:6px 0 4px 0;">Facturas del ${dateEsc}</h2>`;
 
   invoices.forEach((invoice) => {
     const productList = invoice.Products ?? invoice.products ?? [];
     const timeStr = formatTime(getInvoiceDate(invoice.completionDate ?? null));
 
-    html += `<div style="border:1px solid #000;padding:3px 4px;margin-bottom:4px;">`;
-    html += `<div>Factura #${escapeHtml(invoice.id.substring(0, 8))} &nbsp; ${escapeHtml(timeStr)}</div>`;
+    html += `<div style="border:2px solid #000;padding:4px 6px;margin-bottom:6px;">`;
+    html += `<div style="font-weight:700;">Factura #${escapeHtml(invoice.id.substring(0, 8))} &nbsp; ${escapeHtml(timeStr)}</div>`;
     html += `<div><strong>$${(invoice.Total ?? 0).toFixed(2)}</strong> &nbsp; ${(invoice.paymentMethod || "cash") === "cash" ? "Efectivo" : "Transferencia"}</div>`;
     if (invoice.Comment) {
       const commentSafe = truncateToColumns(invoice.Comment, THERMAL_COLUMNS_80MM - 2);
       html += `<div>Comentario: ${escapeHtml(commentSafe)}</div>`;
     }
     if (productList.length > 0) {
-      html += `<div style="margin-top:3px;padding-top:3px;border-top:1px dashed #000;"><strong>Productos:</strong><ul style="margin:1px 0 0 8px;padding:0;">`;
+      html += `<div style="margin-top:4px;padding-top:4px;border-top:2px dashed #000;"><strong>Productos:</strong><ul style="margin:2px 0 0 10px;padding:0;">`;
       productList.forEach((p: Record<string, unknown>) => {
         const rawName = (p.Name ?? p.name ?? "Producto") as string;
         const name = truncateToColumns(rawName, 20);
