@@ -1,4 +1,5 @@
 import { forwardRef } from "react";
+import { formatInColombia } from "../../utils/colombiaTime";
 import "./Receipt.css";
 
 export type ReceiptProduct = {
@@ -35,7 +36,7 @@ const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(({ invoice }, ref) => {
         <p>Gracias por tu compra</p>
       </div>
       <div className="receipt-info">
-        <span>Fecha: {new Date(invoiceDate).toLocaleString()}</span>
+        <span>Fecha: {formatInColombia(new Date(invoiceDate))}</span>
       </div>
       <table className="receipt-table">
         <thead>

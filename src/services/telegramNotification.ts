@@ -3,6 +3,8 @@
  * Token and chatId live only on the server; frontend sends text + Bearer secret.
  */
 
+import { getColombiaDateString } from "../utils/colombiaTime";
+
 const API_BASE = typeof import.meta.env.VITE_API_BASE_URL === "string"
   ? import.meta.env.VITE_API_BASE_URL
   : "";
@@ -32,7 +34,7 @@ export async function sendPurchaseNotification(params: {
   cashAmountPaid?: number;
   cashChange?: number;
 }): Promise<void> {
-  const dateStr = params.date ?? new Date().toISOString().slice(0, 10);
+  const dateStr = params.date ?? getColombiaDateString();
   let methodLine: string;
   if (params.paymentMethod === "transfer") {
     methodLine = "Método: Transferencia";

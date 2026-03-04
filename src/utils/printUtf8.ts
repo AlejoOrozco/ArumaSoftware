@@ -6,6 +6,7 @@
  */
 
 import html2canvas from "html2canvas";
+import { formatInColombia } from "./colombiaTime";
 
 /** 80mm thermal ≈ 48 columns; 58mm ≈ 32. Use 48 for receipt/summary. */
 export const THERMAL_COLUMNS_80MM = 48;
@@ -202,7 +203,7 @@ export type ReceiptInvoiceForPrint = {
  */
 export function getReceiptPrintHtml(invoice: ReceiptInvoiceForPrint): string {
   const { Products, Total, Date: invoiceDate, Comment, paymentMethod } = invoice;
-  const dateStr = new Date(invoiceDate).toLocaleString("es-ES");
+  const dateStr = formatInColombia(new Date(invoiceDate));
 
   /** Product name column ~24 chars so table fits 48 cols on 80mm. */
   const NAME_MAX = 24;

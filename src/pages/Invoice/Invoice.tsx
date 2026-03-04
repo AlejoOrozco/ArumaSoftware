@@ -15,6 +15,7 @@ import CustomModal from "../../components/Modals/CustomModal";
 import Receipt from "../../components/Receipt/Receipt";
 import { printUtf8DocumentAsImage, getReceiptPrintHtml, type ReceiptInvoiceForPrint } from "../../utils/printUtf8";
 import { sendPurchaseNotification, sendLowStockNotification } from "../../services/telegramNotification";
+import { getColombiaDateString } from "../../utils/colombiaTime";
 import "./Invoice.css";
 
 // NOTE: This file is a direct TypeScript port of the existing JSX logic.
@@ -716,7 +717,7 @@ Esta acción no se puede deshacer.`,
       sendPurchaseNotification({
         boardName: boardToSave.name,
         total: finalTotal,
-        date: new Date().toISOString().slice(0, 10),
+        date: getColombiaDateString(),
         paymentMethod,
         ...(paymentMethod === "cash" && {
           cashAmountPaid: Number(cashAmountPaid),

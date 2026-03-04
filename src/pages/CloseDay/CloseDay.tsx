@@ -4,6 +4,7 @@ import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
 import PageLayout from "../../components/common/PageLayout";
 import { printUtf8DocumentAsImage, getDaySummaryPrintHtml } from "../../utils/printUtf8";
 import { sendDaySummaryNotification } from "../../services/telegramNotification";
+import { getColombiaDateString, getColombiaDayRange, formatTimeInColombia, formatDateLongInColombia } from "../../utils/colombiaTime";
 import "./CloseDay.css";
 
 type InvoiceRecord = {
@@ -53,9 +54,7 @@ type Summary = {
 const CloseDay = () => {
   const [invoices, setInvoices] = useState<InvoiceRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedDate, setSelectedDate] = useState(
-    new Date().toISOString().split("T")[0]
-  );
+  const [selectedDate, setSelectedDate] = useState(getColombiaDateString());
   const [summary, setSummary] = useState<Summary>({
     totalCash: 0,
     totalTransfer: 0,
@@ -74,12 +73,7 @@ const CloseDay = () => {
     if (!selectedDate) return;
     setLoading(true);
     try {
-      const parts = selectedDate.split("-");
-      const year = Number(parts[0] ?? 0);
-      const month = Number(parts[1] ?? 1);
-      const day = Number(parts[2] ?? 0);
-      const startDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
-      const endDate = new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999));
+      const { start: startDate, end: endDate } = getColombiaDayRange(selectedDate);
 
       const [productsSnapshot, invoicesSnapshot] = await Promise.all([
         getDocs(collection(db, "Product")),
@@ -122,17 +116,22 @@ const CloseDay = () => {
           return hydrated as InvoiceProductLite;
         });
 
-      const invoicesData: InvoiceRecord[] = invoicesSnapshot.docs.map((docSnap) => {
-        const data = docSnap.data() as Omit<InvoiceRecord, "id">;
-        const rawProducts = data.Products ?? data.products ?? [];
-        const hydrated = hydrateInvoiceProducts(rawProducts as InvoiceProductLite[]);
-        return {
-          id: docSnap.id,
-          ...data,
-          Products: hydrated,
-          products: hydrated,
-        };
-      });
+      const invoicesData: InvoiceRecord[] = invoicesSnapshot.docs
+        .map((docSnap) => {
+          const data = docSnap.data() as Omit<InvoiceRecord, "id">;
+          const rawProducts = data.Products ?? data.products ?? [];
+          const hydrated = hydrateInvoiceProducts(rawProducts as InvoiceProductLite[]);
+          return {
+            id: docSnap.id,
+            ...data,
+            Products: hydrated,
+            products: hydrated,
+          };
+        })
+        .filter((inv) => {
+          const d = getInvoiceDate(inv.completionDate ?? null);
+          return d != null && getColombiaDateString(d) === selectedDate;
+        });
 
       setInvoices(invoicesData);
       calculateSummary(invoicesData);
@@ -177,12 +176,7 @@ const CloseDay = () => {
     const year = Number(parts[0] ?? 0);
     const month = Number(parts[1] ?? 1);
     const day = Number(parts[2] ?? 0);
-    const date = new Date(year, month - 1, day);
-    return date.toLocaleDateString("es-ES", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+    return formatDateLongInColombia(new Date(Date.UTC(year, month - 1, day, 12, 0, 0, 0)));
   };
 
   const getInvoiceDate = (completionDate: { toDate?: () => Date } | Date | string | null): Date | null => {
@@ -198,19 +192,12 @@ const CloseDay = () => {
 
   const formatDate = (dateObj: Date | null) => {
     if (!dateObj) return "";
-    return dateObj.toLocaleDateString("es-ES", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+    return formatDateLongInColombia(dateObj);
   };
 
   const formatTime = (dateObj: Date | null) => {
     if (!dateObj) return "";
-    return dateObj.toLocaleTimeString("es-ES", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    return formatTimeInColombia(dateObj);
   };
 
   if (loading) {
